@@ -4,6 +4,13 @@ members = [
     "contracts/*"
 ]
 
+[profile.release.package.pylon-token]
+opt-level = 3
+debug = false
+debug-assertions = false
+codegen-units = 1
+incremental = false
+
 [profile.release]
 rpath = false
 lto = true
