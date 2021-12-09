@@ -4,10 +4,10 @@ use std::convert::TryFrom;
 
 use crate::executions::airdrop::update;
 use crate::executions::ExecuteResult;
-use crate::state::airdrop::{Airdrop, Reward};
+use crate::states::airdrop::{Airdrop, Reward};
 use crate::testing::{
-    mock_deps, mock_env_height, MockDeps, TEST_TOKEN, TEST_VOTER, TEST_VOTER_2, TEST_VOTER_3,
-    VOTING_TOKEN,
+    instantiate, mock_deps, mock_env_height, MockDeps, TEST_TOKEN, TEST_VOTER, TEST_VOTER_2,
+    TEST_VOTER_3, VOTING_TOKEN,
 };
 
 pub fn exec(
@@ -22,7 +22,7 @@ pub fn exec(
 #[test]
 fn success() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
     let (env, _, _) = super::airdrop_instantiate::default(&mut deps, TEST_TOKEN, 86400);
 
     let response = exec(
@@ -137,7 +137,7 @@ fn success() {
 #[test]
 fn success_with_third_party_sender() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
     let (env, _, _) = super::airdrop_instantiate::default(&mut deps, TEST_TOKEN, 86400);
 
     let response = exec(
@@ -252,7 +252,7 @@ fn success_with_third_party_sender() {
 #[test]
 fn success_with_multiple_shareholders() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
     let (env, _, _) = super::airdrop_instantiate::default(&mut deps, TEST_TOKEN, 86400);
 
     for voter in vec![TEST_VOTER, TEST_VOTER_2, TEST_VOTER_3].iter() {

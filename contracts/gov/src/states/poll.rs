@@ -24,12 +24,6 @@ const MAX_DESC_LENGTH: usize = 1024;
 const MIN_LINK_LENGTH: usize = 12;
 const MAX_LINK_LENGTH: usize = 128;
 
-static KEY_TMP_POLL_ID: &[u8] = b"tmp_poll_id";
-
-static PREFIX_POLL_INDEXER: &[u8] = b"poll_indexer";
-static PREFIX_POLL_VOTER: &[u8] = b"poll_voter";
-static PREFIX_POLL: &[u8] = b"poll";
-
 #[derive(Serialize, Deserialize, Clone, Debug, JsonSchema)]
 pub struct ExecuteData {
     pub order: u64,
@@ -152,11 +146,11 @@ pub struct Poll {
 
 impl Poll {
     pub fn may_load(storage: &dyn Storage, id: &u64) -> StdResult<Option<Poll>> {
-        ReadonlyBucket::new(storage, PREFIX_POLL).may_load(&id.to_be_bytes())
+        ReadonlyBucket::new(storage, super::PREFIX_POLL).may_load(&id.to_be_bytes())
     }
 
     pub fn load(storage: &dyn Storage, id: &u64) -> StdResult<Poll> {
-        ReadonlyBucket::new(storage, PREFIX_POLL).load(&id.to_be_bytes())
+        ReadonlyBucket::new(storage, super::PREFIX_POLL).load(&id.to_be_bytes())
     }
 
     pub fn load_range(
@@ -171,7 +165,7 @@ impl Poll {
             _ => (None, calc_range_end(start_after), OrderBy::Desc),
         };
 
-        ReadonlyBucket::new(storage, PREFIX_POLL)
+        ReadonlyBucket::new(storage, super::PREFIX_POLL)
             .range(start.as_deref(), end.as_deref(), order_by.into())
             .take(limit)
             .map(|item| -> StdResult<Poll> {
@@ -199,7 +193,7 @@ impl Poll {
             .take(limit)
             .map(|item| -> StdResult<Poll> {
                 let (k, _) = item?;
-                ReadonlyBucket::new(storage, PREFIX_POLL).load(&k)
+                ReadonlyBucket::new(storage, super::PREFIX_POLL).load(&k)
             })
             .collect()
     }
@@ -222,21 +216,21 @@ impl Poll {
             .take(limit)
             .map(|item| -> StdResult<Poll> {
                 let (k, _) = item?;
-                ReadonlyBucket::new(storage, PREFIX_POLL).load(&k)
+                ReadonlyBucket::new(storage, super::PREFIX_POLL).load(&k)
             })
             .collect()
     }
 
     pub fn load_temp_id(storage: &dyn Storage) -> StdResult<u64> {
-        ReadonlySingleton::new(storage, KEY_TMP_POLL_ID).load()
+        ReadonlySingleton::new(storage, super::KEY_TMP_POLL_ID).load()
     }
 
     pub fn save(storage: &mut dyn Storage, id: &u64, poll: &Poll) -> StdResult<()> {
-        Bucket::new(storage, PREFIX_POLL).save(&id.to_be_bytes(), poll)
+        Bucket::new(storage, super::PREFIX_POLL).save(&id.to_be_bytes(), poll)
     }
 
     pub fn save_temp_id(storage: &mut dyn Storage, id: &u64) -> StdResult<()> {
-        Singleton::new(storage, KEY_TMP_POLL_ID).save(id)
+        Singleton::new(storage, super::KEY_TMP_POLL_ID).save(id)
     }
 
     pub fn index_status(storage: &mut dyn Storage, id: &u64, status: &PollStatus) -> StdResult<()> {
@@ -269,8 +263,8 @@ impl Poll {
         ReadonlyBucket::multilevel(
             storage,
             &[
-                PREFIX_POLL_INDEXER,
-                b"category",
+                super::PREFIX_POLL_INDEXER,
+                super::PREFIX_POLL_INDEXER_CATEGORY,
                 category.to_string().as_bytes(),
             ],
         )
@@ -283,8 +277,8 @@ impl Poll {
         Bucket::multilevel(
             storage,
             &[
-                PREFIX_POLL_INDEXER,
-                b"category",
+                super::PREFIX_POLL_INDEXER,
+                super::PREFIX_POLL_INDEXER_CATEGORY,
                 category.to_string().as_bytes(),
             ],
         )
@@ -297,8 +291,8 @@ impl Poll {
         ReadonlyBucket::multilevel(
             storage,
             &[
-                PREFIX_POLL_INDEXER,
-                b"status",
+                super::PREFIX_POLL_INDEXER,
+                super::PREFIX_POLL_INDEXER_STATUS,
                 status.to_string().as_bytes(),
             ],
         )
@@ -311,8 +305,8 @@ impl Poll {
         Bucket::multilevel(
             storage,
             &[
-                PREFIX_POLL_INDEXER,
-                "status".as_bytes(),
+                super::PREFIX_POLL_INDEXER,
+                super::PREFIX_POLL_INDEXER_STATUS,
                 status.to_string().as_bytes(),
             ],
         )
@@ -442,7 +436,7 @@ impl VoterInfo {
         poll_id: &u64,
         address: &CanonicalAddr,
     ) -> StdResult<VoterInfo> {
-        ReadonlyBucket::multilevel(storage, &[PREFIX_POLL_VOTER, &poll_id.to_be_bytes()])
+        ReadonlyBucket::multilevel(storage, &[super::PREFIX_POLL_VOTER, &poll_id.to_be_bytes()])
             .load(address.as_slice())
     }
 
@@ -459,7 +453,7 @@ impl VoterInfo {
             _ => (None, calc_range_end_addr(start_after), OrderBy::Desc),
         };
 
-        ReadonlyBucket::multilevel(storage, &[PREFIX_POLL_VOTER, &poll_id.to_be_bytes()])
+        ReadonlyBucket::multilevel(storage, &[super::PREFIX_POLL_VOTER, &poll_id.to_be_bytes()])
             .range(start.as_deref(), end.as_deref(), order_by.into())
             .take(limit)
             .map(|item| {
@@ -476,13 +470,13 @@ impl VoterInfo {
         voter_info: &VoterInfo,
     ) -> StdResult<()> {
         let mut bucket: Bucket<VoterInfo> =
-            Bucket::multilevel(storage, &[PREFIX_POLL_VOTER, &poll_id.to_be_bytes()]);
+            Bucket::multilevel(storage, &[super::PREFIX_POLL_VOTER, &poll_id.to_be_bytes()]);
         bucket.save(address.as_slice(), voter_info)
     }
 
     pub fn remove(storage: &mut dyn Storage, poll_id: &u64, address: &CanonicalAddr) {
         let mut bucket: Bucket<VoterInfo> =
-            Bucket::multilevel(storage, &[PREFIX_POLL_VOTER, &poll_id.to_be_bytes()]);
+            Bucket::multilevel(storage, &[super::PREFIX_POLL_VOTER, &poll_id.to_be_bytes()]);
         bucket.remove(address.as_slice())
     }
 }

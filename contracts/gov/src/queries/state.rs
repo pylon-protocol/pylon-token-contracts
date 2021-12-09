@@ -2,7 +2,7 @@ use cosmwasm_std::{to_binary, Deps};
 use pylon_token::gov_resp::StateResponse;
 
 use crate::queries::QueryResult;
-use crate::state::state::State;
+use crate::states::state::State;
 
 pub fn query_state(deps: Deps) -> QueryResult {
     let state = State::load(deps.storage)?;

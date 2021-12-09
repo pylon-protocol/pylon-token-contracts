@@ -8,8 +8,8 @@ use crate::error::ContractError;
 use crate::executions::staking::withdraw_voting_tokens;
 use crate::executions::ExecuteResult;
 use crate::queries::bank::query_staker;
-use crate::state::poll::{Poll, PollStatus, VoteOption};
-use crate::testing::{mock_deps, MockDeps, TEST_VOTER, VOTING_TOKEN};
+use crate::states::poll::{Poll, PollStatus, VoteOption};
+use crate::testing::{instantiate, mock_deps, MockDeps, TEST_VOTER, VOTING_TOKEN};
 
 pub fn exec(
     deps: &mut MockDeps,
@@ -24,7 +24,7 @@ pub fn exec(
 #[test]
 fn success() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     deps.querier.with_token_balances(&[(
         &VOTING_TOKEN.to_string(),
@@ -99,9 +99,9 @@ fn success() {
 #[test]
 fn success_with_poll() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_proposal_deposit = super::instantiate::default_msg().proposal_deposit;
+    let default_proposal_deposit = instantiate::default_msg().proposal_deposit;
 
     deps.querier.with_token_balances(&[(
         &VOTING_TOKEN.to_string(),
@@ -188,7 +188,7 @@ fn success_with_poll() {
 #[test]
 fn test_nothing_staked() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     match exec(
         &mut deps,
@@ -206,7 +206,7 @@ fn test_nothing_staked() {
 #[test]
 fn test_invalid_withdraw_amount() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     deps.querier.with_token_balances(&[(
         &VOTING_TOKEN.to_string(),

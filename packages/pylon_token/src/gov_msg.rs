@@ -154,18 +154,8 @@ pub enum QueryMsg {
         poll_id: u64,
     },
     Polls {
-        start_after: Option<u64>,
-        limit: Option<u32>,
-        order_by: Option<OrderBy>,
-    },
-    PollsWithCategoryFilter {
-        category_filter: Option<PollCategory>,
-        start_after: Option<u64>,
-        limit: Option<u32>,
-        order_by: Option<OrderBy>,
-    },
-    PollsWithStatusFilter {
         status_filter: Option<PollStatus>,
+        category_filter: Option<PollCategory>,
         start_after: Option<u64>,
         limit: Option<u32>,
         order_by: Option<OrderBy>,

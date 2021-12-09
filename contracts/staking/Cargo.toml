@@ -34,7 +34,7 @@ overflow-checks = true
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cw20 = { version = "0.8.0" }
+cw20 = { version = "0.9.1" }
 cosmwasm-std = { version = "0.16.0", features = ["iterator"] }
 cosmwasm-storage = { version = "0.16.0", features = ["iterator"] }
 pylon-token = { version = "0.2.0", path = "../../packages/pylon_token" }

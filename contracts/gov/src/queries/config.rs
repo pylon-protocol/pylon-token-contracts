@@ -2,7 +2,7 @@ use cosmwasm_std::{to_binary, Deps};
 use pylon_token::gov_resp::ConfigResponse;
 
 use crate::queries::QueryResult;
-use crate::state::config::Config;
+use crate::states::config::Config;
 
 pub fn query_config(deps: Deps) -> QueryResult {
     let config = Config::load(deps.storage)?;
