@@ -3,8 +3,6 @@ use cosmwasm_storage::{ReadonlySingleton, Singleton};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-static KEY_CONFIG: &[u8] = b"config";
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
     pub owner: CanonicalAddr,
@@ -20,11 +18,11 @@ pub struct Config {
 
 impl Config {
     pub fn load(storage: &dyn Storage) -> StdResult<Config> {
-        ReadonlySingleton::new(storage, KEY_CONFIG).load()
+        ReadonlySingleton::new(storage, super::KEY_CONFIG).load()
     }
 
     pub fn save(storage: &mut dyn Storage, config: &Config) -> StdResult<()> {
-        Singleton::new(storage, KEY_CONFIG).save(config)
+        Singleton::new(storage, super::KEY_CONFIG).save(config)
     }
 
     pub fn validate(&self) -> StdResult<()> {

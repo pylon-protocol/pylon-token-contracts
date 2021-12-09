@@ -3,7 +3,7 @@ use pylon_token::gov_resp::APIVersionResponse;
 
 use crate::constant::API_VERSION;
 use crate::queries::query_api_version;
-use crate::testing::executions::instantiate;
+use crate::testing::instantiate;
 use crate::testing::mock_deps;
 
 #[test]

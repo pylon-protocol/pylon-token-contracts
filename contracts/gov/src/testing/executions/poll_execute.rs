@@ -3,8 +3,8 @@ use cosmwasm_std::{Env, MessageInfo, Uint128};
 
 use crate::executions::poll::execute;
 use crate::executions::ExecuteResult;
-use crate::state::poll::VoteOption;
-use crate::testing::{mock_deps, MockDeps, TEST_VOTER, VOTING_TOKEN};
+use crate::states::poll::VoteOption;
+use crate::testing::{instantiate, mock_deps, MockDeps, TEST_VOTER, VOTING_TOKEN};
 
 #[allow(dead_code)]
 pub fn exec(deps: &mut MockDeps, env: Env, _info: MessageInfo, poll_id: u64) -> ExecuteResult {
@@ -14,9 +14,9 @@ pub fn exec(deps: &mut MockDeps, env: Env, _info: MessageInfo, poll_id: u64) -> 
 #[test]
 fn success() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_init_msg = super::instantiate::default_msg();
+    let default_init_msg = instantiate::default_msg();
 
     const STAKE_AMOUNT: u128 = 1000;
     const POLL_ID: u64 = 1;

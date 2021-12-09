@@ -1,11 +1,13 @@
 [package]
 name = "pylon-gov"
-version = "1.0.0"
-authors = ["Terraform Labs, PTE."]
+version = "1.1.0"
+authors = ["carter@pylon.money", "Terraform Labs, PTE."]
 edition = "2018"
 license = "Apache-2.0"
-description = "A Goverance contract for Anchor Protocol - allows a user to create poll and do vote"
-repository = "https://github.com/pylon-Protocol/pylon-token-contracts"
+description = "A Goverance contract for Pylon Protocol - allows a user to create poll and do vote"
+repository = "https://github.com/pylon-protocol/pylon-token-contracts"
+homepage = "https://pylon.money"
+documentation = "https://docs.pylon.money"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.

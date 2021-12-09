@@ -4,6 +4,7 @@ use cosmwasm_std::{Env, OwnedDeps, Timestamp};
 use crate::testing::mock_querier::{mock_dependencies, WasmMockQuerier};
 
 mod executions;
+mod instantiate;
 mod mock_querier;
 mod queries;
 

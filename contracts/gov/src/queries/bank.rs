@@ -6,11 +6,11 @@ use terraswap::querier::query_token_balance;
 
 use crate::executions::airdrop::{calculate_reward_per_token, calculate_rewards};
 use crate::queries::QueryResult;
-use crate::state::airdrop::{Airdrop, Reward as AirdropReward};
-use crate::state::bank::TokenManager;
-use crate::state::config::Config;
-use crate::state::poll::{Poll, PollStatus};
-use crate::state::state::State;
+use crate::states::airdrop::{Airdrop, Reward as AirdropReward};
+use crate::states::bank::TokenManager;
+use crate::states::config::Config;
+use crate::states::poll::{Poll, PollStatus};
+use crate::states::state::State;
 
 pub fn query_staker(deps: Deps, env: Env, address: String) -> QueryResult {
     let config = Config::load(deps.storage)?;

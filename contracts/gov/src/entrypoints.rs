@@ -10,8 +10,8 @@ use pylon_token::gov_msg::{
 
 use crate::constant::POLL_EXECUTE_REPLY_ID;
 use crate::error::ContractError;
-use crate::state::poll::Poll;
-use crate::{executions, queries};
+use crate::states::poll::Poll;
+use crate::{executions, migrations, queries};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -169,34 +169,36 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
         } => queries::airdrop::query_airdrops(deps, start_after, limit, order_by),
         QueryMsg::Poll { poll_id } => queries::poll::query_poll(deps, poll_id),
         QueryMsg::Polls {
-            start_after,
-            limit,
-            order_by,
-        } => queries::poll::query_polls(deps, start_after, limit, order_by),
-        QueryMsg::PollsWithCategoryFilter {
+            status_filter,
             category_filter,
             start_after,
             limit,
             order_by,
-        } => queries::poll::query_polls_with_category_filter(
-            deps,
-            category_filter.map(|x| x.into()),
-            start_after,
-            limit,
-            order_by,
-        ),
-        QueryMsg::PollsWithStatusFilter {
-            status_filter,
-            start_after,
-            limit,
-            order_by,
-        } => queries::poll::query_polls_with_status_filter(
-            deps,
-            status_filter.map(|x| x.into()),
-            start_after,
-            limit,
-            order_by,
-        ),
+        } => {
+            if let Some(status_filter) = status_filter.map(|x| x.into()) {
+                return queries::poll::query_polls_with_status_filter(
+                    deps,
+                    Some(status_filter),
+                    start_after,
+                    limit,
+                    order_by,
+                );
+            }
+
+            if let Some(category_filter) = category_filter.map(|x| x.into()) {
+                return queries::poll::query_polls_with_category_filter(
+                    deps,
+                    Some(category_filter),
+                    start_after,
+                    limit,
+                    order_by,
+                );
+            }
+
+            // fallback
+            queries::poll::query_polls(deps, start_after, limit, order_by)
+        }
+
         QueryMsg::Voters {
             poll_id,
             start_after,
@@ -207,6 +209,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
-    executions::migrate(deps, env, msg)
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> migrations::MigrateResult {
+    match msg {
+        MigrateMsg::State {} => migrations::state::migrate(deps, env),
+        MigrateMsg::General {} => Ok(Response::default()),
+    }
 }

@@ -9,10 +9,10 @@ use terraswap::querier::query_token_balance;
 use crate::constant::POLL_EXECUTE_REPLY_ID;
 use crate::error::ContractError;
 use crate::executions::ExecuteResult;
-use crate::state::bank::TokenManager;
-use crate::state::config::Config;
-use crate::state::poll::{ExecuteData, Poll, PollCategory, PollStatus, VoteOption, VoterInfo};
-use crate::state::state::State;
+use crate::states::bank::TokenManager;
+use crate::states::config::Config;
+use crate::states::poll::{ExecuteData, Poll, PollCategory, PollStatus, VoteOption, VoterInfo};
+use crate::states::state::State;
 
 #[allow(clippy::too_many_arguments)]
 /// create a new poll

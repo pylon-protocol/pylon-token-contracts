@@ -9,9 +9,6 @@ use std::convert::TryInto;
 
 use crate::constant::{DEFAULT_QUERY_LIMIT, MAX_QUERY_LIMIT};
 
-static PREFIX_AIRDROP: &[u8] = b"airdrop";
-static PREFIX_AIRDROP_REWARD: &[u8] = b"airdrop_reward";
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
     pub start: u64,
@@ -59,7 +56,7 @@ impl Airdrop {
     }
 
     pub fn load(storage: &dyn Storage, id: &u64) -> Option<Airdrop> {
-        ReadonlyBucket::new(storage, PREFIX_AIRDROP)
+        ReadonlyBucket::new(storage, super::PREFIX_AIRDROP)
             .may_load(&id.to_be_bytes())
             .unwrap()
     }
@@ -76,7 +73,7 @@ impl Airdrop {
             _ => (None, calc_range_end(start_after), OrderBy::Desc),
         };
 
-        ReadonlyBucket::new(storage, PREFIX_AIRDROP)
+        ReadonlyBucket::new(storage, super::PREFIX_AIRDROP)
             .range(start.as_deref(), end.as_deref(), order_by.into())
             .take(limit)
             .map(
@@ -89,7 +86,7 @@ impl Airdrop {
     }
 
     pub fn save(storage: &mut dyn Storage, id: &u64, airdrop: &Airdrop) -> StdResult<()> {
-        Bucket::new(storage, PREFIX_AIRDROP).save(&id.to_be_bytes(), airdrop)
+        Bucket::new(storage, super::PREFIX_AIRDROP).save(&id.to_be_bytes(), airdrop)
     }
 }
 
@@ -102,9 +99,12 @@ pub struct Reward {
 impl Reward {
     pub fn load(storage: &dyn Storage, address: &Addr, id: &u64) -> StdResult<Reward> {
         Ok(
-            ReadonlyBucket::multilevel(storage, &[PREFIX_AIRDROP_REWARD, address.as_bytes()])
-                .may_load(&id.to_be_bytes())?
-                .unwrap_or_default(),
+            ReadonlyBucket::multilevel(
+                storage,
+                &[super::PREFIX_AIRDROP_REWARD, address.as_bytes()],
+            )
+            .may_load(&id.to_be_bytes())?
+            .unwrap_or_default(),
         )
     }
 
@@ -121,7 +121,7 @@ impl Reward {
             _ => (None, calc_range_end(start_after), OrderBy::Desc),
         };
 
-        ReadonlyBucket::multilevel(storage, &[PREFIX_AIRDROP_REWARD, address.as_bytes()])
+        ReadonlyBucket::multilevel(storage, &[super::PREFIX_AIRDROP_REWARD, address.as_bytes()])
             .range(start.as_deref(), end.as_deref(), order_by.into())
             .take(limit)
             .map(
@@ -140,13 +140,13 @@ impl Reward {
         reward: &Reward,
     ) -> StdResult<()> {
         let mut bucket: Bucket<Reward> =
-            Bucket::multilevel(storage, &[PREFIX_AIRDROP_REWARD, address.as_bytes()]);
+            Bucket::multilevel(storage, &[super::PREFIX_AIRDROP_REWARD, address.as_bytes()]);
         bucket.save(&airdrop_id.to_be_bytes(), reward)
     }
 
     pub fn remove(storage: &mut dyn Storage, address: &Addr, airdrop_id: &u64) {
         let mut bucket: Bucket<Reward> =
-            Bucket::multilevel(storage, &[PREFIX_AIRDROP_REWARD, address.as_bytes()]);
+            Bucket::multilevel(storage, &[super::PREFIX_AIRDROP_REWARD, address.as_bytes()]);
         bucket.remove(&airdrop_id.to_be_bytes())
     }
 }

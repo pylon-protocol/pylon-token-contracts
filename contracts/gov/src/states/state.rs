@@ -3,8 +3,6 @@ use cosmwasm_storage::{singleton, singleton_read};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-static KEY_STATE: &[u8] = b"state";
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
     pub poll_count: u64,
@@ -16,10 +14,10 @@ pub struct State {
 
 impl State {
     pub fn load(storage: &dyn Storage) -> StdResult<State> {
-        singleton_read(storage, KEY_STATE).load()
+        singleton_read(storage, super::KEY_STATE).load()
     }
 
     pub fn save(storage: &mut dyn Storage, state: &State) -> StdResult<()> {
-        singleton(storage, KEY_STATE).save(state)
+        singleton(storage, super::KEY_STATE).save(state)
     }
 }

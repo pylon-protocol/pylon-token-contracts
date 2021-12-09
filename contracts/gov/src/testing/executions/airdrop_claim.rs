@@ -3,7 +3,9 @@ use cosmwasm_std::{attr, Env, MessageInfo, Uint128};
 
 use crate::executions::airdrop::claim_internal;
 use crate::executions::ExecuteResult;
-use crate::testing::{mock_deps, mock_env_height, MockDeps, TEST_TOKEN, TEST_VOTER, VOTING_TOKEN};
+use crate::testing::{
+    instantiate, mock_deps, mock_env_height, MockDeps, TEST_TOKEN, TEST_VOTER, VOTING_TOKEN,
+};
 
 #[allow(dead_code)]
 pub fn exec(
@@ -19,7 +21,7 @@ pub fn exec(
 #[test]
 fn success() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
     let (env, _, _) = super::airdrop_instantiate::default(&mut deps, TEST_TOKEN, 86400);
 
     deps.querier.with_token_balances(&[(

@@ -4,10 +4,10 @@ use pylon_token::gov_msg::ClaimableAirdrop;
 use pylon_token::gov_resp::StakerResponse;
 
 use crate::queries::bank::query_staker;
-use crate::testing::executions::{
-    airdrop_instantiate, airdrop_update, instantiate, staking_deposit,
+use crate::testing::executions::{airdrop_instantiate, airdrop_update, staking_deposit};
+use crate::testing::{
+    instantiate, mock_deps, mock_env_height, TEST_TOKEN, TEST_VOTER, VOTING_TOKEN,
 };
-use crate::testing::{mock_deps, mock_env_height, TEST_TOKEN, TEST_VOTER, VOTING_TOKEN};
 
 #[test]
 fn stakers_filter_zero_reward() {
