@@ -2,7 +2,6 @@ use cosmwasm_std::{to_binary, Binary, Deps};
 use cw2::get_contract_version;
 use pylon_token::gov_resp::APIVersionResponse;
 
-use crate::constant::API_VERSION;
 use crate::error::ContractError;
 
 pub mod airdrop;

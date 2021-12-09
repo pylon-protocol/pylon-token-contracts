@@ -1,18 +1,12 @@
 use cosmwasm_std::{
-    from_binary, to_binary, CanonicalAddr, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Order,
-    Response, Uint128, WasmMsg,
+    from_binary, to_binary, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, Uint128,
+    WasmMsg,
 };
-use cosmwasm_storage::{ReadonlyBucket, ReadonlySingleton};
 use cw20::Cw20ReceiveMsg;
-use pylon_token::gov_msg::{
-    AirdropMsg, Cw20HookMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, StakingMsg,
-};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use pylon_token::gov_msg::{AirdropMsg, Cw20HookMsg, ExecuteMsg, InstantiateMsg, StakingMsg};
 
 use crate::error::ContractError;
 use crate::states::config::Config;
-use crate::states::poll::{ExecuteData, Poll, PollCategory, PollStatus};
 use crate::states::state::State;
 
 pub type ExecuteResult = Result<Response, ContractError>;
