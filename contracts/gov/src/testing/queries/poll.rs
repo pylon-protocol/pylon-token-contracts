@@ -76,13 +76,9 @@ fn polls_default() {
     let response = from_binary::<gov_resp::PollsResponse>(&response).unwrap();
     for status in status_list.iter() {
         for category in category_list.iter() {
-            assert!(response
-                .polls
-                .iter()
-                .find(|x| {
-                    x.status == status.clone().into() && x.category == category.clone().into()
-                })
-                .is_some());
+            assert!(response.polls.iter().any(|x| {
+                x.status == status.clone().into() && x.category == category.clone().into()
+            }));
         }
     }
 }
@@ -99,15 +95,13 @@ fn polls_with_status_filter_default() {
         assert!(response
             .polls
             .iter()
-            .find(|x| x.status == PollStatus::InProgress.into()
-                && x.category == category.clone().into())
-            .is_some());
-        assert!(response
+            .any(|x| x.status == PollStatus::InProgress.into()
+                && x.category == category.clone().into()));
+        assert!(!response
             .polls
             .iter()
-            .find(|x| x.status != PollStatus::InProgress.into()
-                && x.category == category.clone().into())
-            .is_none());
+            .any(|x| x.status != PollStatus::InProgress.into()
+                && x.category == category.clone().into()));
     }
 }
 
@@ -123,12 +117,10 @@ fn polls_with_category_filter_default() {
         assert!(response
             .polls
             .iter()
-            .find(|x| x.status == status.clone().into() && x.category == PollCategory::None.into())
-            .is_some());
-        assert!(response
+            .any(|x| x.status == status.clone().into() && x.category == PollCategory::None.into()));
+        assert!(!response
             .polls
             .iter()
-            .find(|x| x.status == status.clone().into() && x.category != PollCategory::None.into())
-            .is_none());
+            .any(|x| x.status == status.clone().into() && x.category != PollCategory::None.into()));
     }
 }
