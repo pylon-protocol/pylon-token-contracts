@@ -2,9 +2,11 @@ use cosmwasm_std::{
     from_binary, to_binary, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, Uint128,
     WasmMsg,
 };
+use cw2::set_contract_version;
 use cw20::Cw20ReceiveMsg;
 use pylon_token::gov_msg::{AirdropMsg, Cw20HookMsg, ExecuteMsg, InstantiateMsg, StakingMsg};
 
+use crate::constant::{CONTRACT_NAME, CONTRACT_VERSION};
 use crate::error::ContractError;
 use crate::states::config::Config;
 use crate::states::state::State;
@@ -21,6 +23,8 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> ExecuteResult {
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION).unwrap();
+
     let response = Response::default().add_attribute("action", "instantiate");
 
     let config = Config {
