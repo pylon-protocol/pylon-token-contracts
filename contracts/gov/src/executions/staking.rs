@@ -7,10 +7,10 @@ use terraswap::querier::query_token_balance;
 
 use crate::error::ContractError;
 use crate::executions::ExecuteResult;
-use crate::state::bank::TokenManager;
-use crate::state::config::Config;
-use crate::state::poll::{Poll, PollStatus, VoterInfo};
-use crate::state::state::State;
+use crate::states::bank::TokenManager;
+use crate::states::config::Config;
+use crate::states::poll::{Poll, PollStatus, VoterInfo};
+use crate::states::state::State;
 
 // INTERNAL
 pub fn stake_voting_tokens(

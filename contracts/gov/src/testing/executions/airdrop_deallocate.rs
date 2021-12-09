@@ -4,8 +4,8 @@ use cosmwasm_std::{attr, Api, Env, MessageInfo, Uint128};
 use crate::error::ContractError;
 use crate::executions::airdrop::deallocate;
 use crate::executions::ExecuteResult;
-use crate::state::airdrop::Reward;
-use crate::testing::{mock_deps, MockDeps, TEST_CREATOR, TEST_TOKEN, TEST_VOTER};
+use crate::states::airdrop::Reward;
+use crate::testing::{instantiate, mock_deps, MockDeps, TEST_CREATOR, TEST_TOKEN, TEST_VOTER};
 
 pub fn exec(
     deps: &mut MockDeps,
@@ -28,7 +28,7 @@ pub fn exec(
 #[test]
 fn success() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
     super::airdrop_instantiate::default(&mut deps, TEST_TOKEN, 1000u128);
     super::airdrop_allocate::exec(
         &mut deps,
@@ -71,7 +71,7 @@ fn success() {
 #[test]
 fn fail_unauthorized() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
     super::airdrop_instantiate::default(&mut deps, TEST_TOKEN, 1000u128);
     super::airdrop_allocate::exec(
         &mut deps,

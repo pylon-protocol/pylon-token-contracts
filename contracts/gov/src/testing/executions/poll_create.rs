@@ -6,9 +6,11 @@ use pylon_token::gov_msg::PollExecuteMsg;
 use crate::error::ContractError;
 use crate::executions::poll::create;
 use crate::executions::ExecuteResult;
-use crate::state::poll::PollCategory;
-use crate::state::state::State;
-use crate::testing::{mock_deps, MockDeps, LONG_STRING, SHORT_STRING, TEST_CREATOR, VOTING_TOKEN};
+use crate::states::poll::PollCategory;
+use crate::states::state::State;
+use crate::testing::{
+    instantiate, mock_deps, MockDeps, LONG_STRING, SHORT_STRING, TEST_CREATOR, VOTING_TOKEN,
+};
 
 pub struct Message {
     pub proposer: String,
@@ -46,7 +48,7 @@ pub fn default(deps: &mut MockDeps) -> (Env, MessageInfo, Response) {
 pub fn default_msg() -> Message {
     Message {
         proposer: TEST_CREATOR.to_string(),
-        deposit: super::instantiate::default_msg().proposal_deposit,
+        deposit: instantiate::default_msg().proposal_deposit,
         title: "test".to_string(),
         category: PollCategory::Core,
         description: "test".to_string(),
@@ -116,7 +118,7 @@ pub fn assert_create_poll_result(
         State {
             poll_count: 1,
             total_share: Uint128::zero(),
-            total_deposit: super::instantiate::default_msg().proposal_deposit,
+            total_deposit: instantiate::default_msg().proposal_deposit,
             total_airdrop_count: 0,
             airdrop_update_candidates: vec![]
         }
@@ -126,12 +128,12 @@ pub fn assert_create_poll_result(
 #[test]
 fn success() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     let (env, _, response) = default(&mut deps);
     assert_create_poll_result(
         1,
-        env.block.height + super::instantiate::default_msg().voting_period,
+        env.block.height + instantiate::default_msg().voting_period,
         TEST_CREATOR,
         response,
         deps.as_ref(),
@@ -141,7 +143,7 @@ fn success() {
 #[test]
 fn fail_invalid_title() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     let mut msg = default_msg();
     msg.title = SHORT_STRING.to_string();
@@ -167,7 +169,7 @@ fn fail_invalid_title() {
 #[test]
 fn fail_invalid_description() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     let mut msg = default_msg();
     msg.description = SHORT_STRING.to_string();
@@ -193,7 +195,7 @@ fn fail_invalid_description() {
 #[test]
 fn fail_invalid_link() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     let mut msg = default_msg();
     msg.link = Some("http://hih".to_string());
@@ -219,9 +221,9 @@ fn fail_invalid_link() {
 #[test]
 fn fail_invalid_deposit() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_deposit = super::instantiate::default_msg().proposal_deposit;
+    let default_deposit = instantiate::default_msg().proposal_deposit;
     let mut msg = default_msg();
     msg.deposit = default_deposit - Uint128::from(1u128);
     match exec(&mut deps, mock_env(), mock_info(VOTING_TOKEN, &[]), msg) {

@@ -9,9 +9,10 @@ use crate::executions::poll::cast_vote;
 use crate::executions::ExecuteResult;
 use crate::queries::bank::query_staker;
 use crate::queries::poll::{query_poll, query_voters};
-use crate::state::poll::VoteOption;
+use crate::states::poll::VoteOption;
 use crate::testing::{
-    mock_deps, mock_env_height, MockDeps, TEST_VOTER, TEST_VOTER_2, TEST_VOTER_3, VOTING_TOKEN,
+    instantiate, mock_deps, mock_env_height, MockDeps, TEST_VOTER, TEST_VOTER_2, TEST_VOTER_3,
+    VOTING_TOKEN,
 };
 
 pub fn exec(
@@ -74,9 +75,9 @@ pub fn assert_cast_vote_success(
 #[test]
 fn success() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_proposal_deposit = super::instantiate::default_msg().proposal_deposit;
+    let default_proposal_deposit = instantiate::default_msg().proposal_deposit;
 
     deps.querier.with_token_balances(&[(
         &VOTING_TOKEN.to_string(),
@@ -150,9 +151,9 @@ fn success() {
 #[test]
 fn success_with_snapshot() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_proposal_deposit = super::instantiate::default_msg().proposal_deposit;
+    let default_proposal_deposit = instantiate::default_msg().proposal_deposit;
 
     deps.querier.with_token_balances(&[(
         &VOTING_TOKEN.to_string(),
@@ -272,9 +273,9 @@ fn success_with_snapshot() {
 #[test]
 fn fail_not_enough_staked() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_proposal_deposit = super::instantiate::default_msg().proposal_deposit;
+    let default_proposal_deposit = instantiate::default_msg().proposal_deposit;
 
     deps.querier.with_token_balances(&[(
         &VOTING_TOKEN.to_string(),
@@ -311,9 +312,9 @@ fn fail_not_enough_staked() {
 #[test]
 fn fail_already_voted() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_proposal_deposit = super::instantiate::default_msg().proposal_deposit;
+    let default_proposal_deposit = instantiate::default_msg().proposal_deposit;
 
     deps.querier.with_token_balances(&[(
         &VOTING_TOKEN.to_string(),
@@ -360,7 +361,7 @@ fn fail_already_voted() {
 #[test]
 fn fail_poll_not_found() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     match exec(
         &mut deps,

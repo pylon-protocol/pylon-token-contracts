@@ -1,19 +1,15 @@
 use cosmwasm_std::{
-    from_binary, to_binary, CanonicalAddr, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Order,
-    Response, Uint128, WasmMsg,
+    from_binary, to_binary, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, Uint128,
+    WasmMsg,
 };
-use cosmwasm_storage::{ReadonlyBucket, ReadonlySingleton};
+use cw2::set_contract_version;
 use cw20::Cw20ReceiveMsg;
-use pylon_token::gov_msg::{
-    AirdropMsg, Cw20HookMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, StakingMsg,
-};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use pylon_token::gov_msg::{AirdropMsg, Cw20HookMsg, ExecuteMsg, InstantiateMsg, StakingMsg};
 
+use crate::constant::{CONTRACT_NAME, CONTRACT_VERSION};
 use crate::error::ContractError;
-use crate::state::config::Config;
-use crate::state::poll::{ExecuteData, Poll, PollCategory, PollStatus};
-use crate::state::state::State;
+use crate::states::config::Config;
+use crate::states::state::State;
 
 pub type ExecuteResult = Result<Response, ContractError>;
 
@@ -27,6 +23,8 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> ExecuteResult {
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION).unwrap();
+
     let response = Response::default().add_attribute("action", "instantiate");
 
     let config = Config {
@@ -160,88 +158,4 @@ pub fn update_config(
     Config::save(deps.storage, &config)?;
 
     Ok(response)
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct LegacyState {
-    pub poll_count: u64,
-    pub total_share: Uint128,
-    pub total_deposit: Uint128,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct LegacyPoll {
-    pub id: u64,
-    pub creator: CanonicalAddr,
-    pub status: PollStatus,
-    pub yes_votes: Uint128,
-    pub no_votes: Uint128,
-    pub end_height: u64,
-    pub title: String,
-    pub description: String,
-    pub link: Option<String>,
-    pub execute_data: Option<Vec<ExecuteData>>,
-    pub deposit_amount: Uint128,
-    /// Total balance at the end poll
-    pub total_balance_at_end_poll: Option<Uint128>,
-    pub staked_amount: Option<Uint128>,
-}
-
-pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> ExecuteResult {
-    match msg {
-        MigrateMsg::State {} => {
-            let state: LegacyState = ReadonlySingleton::new(deps.storage, b"state")
-                .load()
-                .unwrap();
-
-            State::save(
-                deps.storage,
-                &State {
-                    poll_count: state.poll_count,
-                    total_share: state.total_share,
-                    total_deposit: state.total_deposit,
-                    total_airdrop_count: 0,
-                    airdrop_update_candidates: vec![],
-                },
-            )
-            .unwrap();
-
-            let legacy_poll_store: ReadonlyBucket<LegacyPoll> =
-                ReadonlyBucket::new(deps.storage, b"poll");
-            let legacy_polls: Vec<LegacyPoll> = legacy_poll_store
-                .range(None, None, Order::Descending)
-                .take(100)
-                .map(|item| -> LegacyPoll {
-                    let (_, v) = item.unwrap();
-                    v
-                })
-                .collect();
-
-            for poll in legacy_polls.iter() {
-                Poll::save(
-                    deps.storage,
-                    &poll.id,
-                    &Poll {
-                        id: poll.id,
-                        creator: poll.creator.clone(),
-                        status: poll.status.clone(),
-                        yes_votes: poll.yes_votes,
-                        no_votes: poll.no_votes,
-                        end_height: poll.end_height,
-                        title: poll.title.clone(),
-                        category: PollCategory::None,
-                        description: poll.description.clone(),
-                        link: poll.link.clone(),
-                        execute_data: poll.execute_data.clone(),
-                        deposit_amount: poll.deposit_amount,
-                        total_balance_at_end_poll: poll.total_balance_at_end_poll,
-                        staked_amount: poll.staked_amount,
-                    },
-                )?;
-            }
-        }
-        MigrateMsg::General {} => {}
-    }
-
-    Ok(Response::default())
 }

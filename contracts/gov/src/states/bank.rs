@@ -6,9 +6,7 @@ use pylon_utils::range::{calc_range_end_addr, calc_range_start_addr};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::state::poll::VoterInfo;
-
-static PREFIX_BANK: &[u8] = b"bank";
+use crate::states::poll::VoterInfo;
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct TokenManager {
@@ -18,7 +16,7 @@ pub struct TokenManager {
 
 impl TokenManager {
     pub fn load(storage: &dyn Storage, address: &CanonicalAddr) -> StdResult<TokenManager> {
-        Ok(ReadonlyBucket::new(storage, PREFIX_BANK)
+        Ok(ReadonlyBucket::new(storage, super::PREFIX_BANK)
             .may_load(address.as_slice())?
             .unwrap_or_default())
     }
@@ -35,7 +33,7 @@ impl TokenManager {
         };
         let limit = limit.unwrap_or(DEFAULT_QUERY_LIMIT).min(MAX_QUERY_LIMIT) as usize;
 
-        ReadonlyBucket::new(storage, PREFIX_BANK)
+        ReadonlyBucket::new(storage, super::PREFIX_BANK)
             .range(start.as_deref(), end.as_deref(), order_by.into())
             .take(limit)
             .map(
@@ -52,6 +50,6 @@ impl TokenManager {
         address: &CanonicalAddr,
         manager: &TokenManager,
     ) -> StdResult<()> {
-        Bucket::new(storage, PREFIX_BANK).save(address.as_slice(), manager)
+        Bucket::new(storage, super::PREFIX_BANK).save(address.as_slice(), manager)
     }
 }

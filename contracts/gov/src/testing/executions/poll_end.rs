@@ -13,10 +13,11 @@ use crate::executions::poll::end;
 use crate::executions::ExecuteResult;
 use crate::queries::bank::query_staker;
 use crate::queries::poll::{query_poll, query_polls_with_status_filter, query_voters};
-use crate::state::bank::TokenManager;
-use crate::state::poll::{PollStatus, VoteOption, VoterInfo};
+use crate::states::bank::TokenManager;
+use crate::states::poll::{PollStatus, VoteOption, VoterInfo};
 use crate::testing::{
-    mock_deps, mock_env_height, MockDeps, TEST_CREATOR, TEST_VOTER, TEST_VOTER_2, VOTING_TOKEN,
+    instantiate, mock_deps, mock_env_height, MockDeps, TEST_CREATOR, TEST_VOTER, TEST_VOTER_2,
+    VOTING_TOKEN,
 };
 
 pub fn exec(deps: &mut MockDeps, env: Env, _info: MessageInfo, poll_id: u64) -> ExecuteResult {
@@ -163,9 +164,9 @@ pub fn assert_end_poll_fail(
 #[test]
 fn end_poll() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_init_msg = super::instantiate::default_msg();
+    let default_init_msg = instantiate::default_msg();
 
     // create poll
     const POLL_ID: u64 = 1;
@@ -254,9 +255,9 @@ fn end_poll() {
 #[test]
 fn end_poll_with_controlled_quorum() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_init_msg = super::instantiate::default_msg();
+    let default_init_msg = instantiate::default_msg();
 
     // create poll
     const STAKE_AMOUNT: u128 = 1000;
@@ -334,9 +335,9 @@ fn end_poll_with_controlled_quorum() {
 #[test]
 fn end_poll_zero_quorum() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_init_msg = super::instantiate::default_msg();
+    let default_init_msg = instantiate::default_msg();
 
     // create poll
     const STAKE_AMOUNT: u128 = 1000;
@@ -377,9 +378,9 @@ fn end_poll_zero_quorum() {
 #[test]
 fn end_poll_quorum_rejected() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_init_msg = super::instantiate::default_msg();
+    let default_init_msg = instantiate::default_msg();
 
     // create poll
     const STAKE_AMOUNT: u128 = 1000;
@@ -419,9 +420,9 @@ fn end_poll_quorum_rejected() {
 #[test]
 fn end_poll_quorum_rejected_nothing_staked() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_init_msg = super::instantiate::default_msg();
+    let default_init_msg = instantiate::default_msg();
 
     // create poll
     const POLL_ID: u64 = 1;
@@ -442,9 +443,9 @@ fn end_poll_quorum_rejected_nothing_staked() {
 #[test]
 fn end_poll_nay_rejected() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_init_msg = super::instantiate::default_msg();
+    let default_init_msg = instantiate::default_msg();
 
     // create poll
     const STAKE_AMOUNT: u128 = 1000;
@@ -484,7 +485,7 @@ fn end_poll_nay_rejected() {
 #[test]
 fn fails_end_poll_before_end_height() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
     super::poll_create::default(&mut deps);
 
     match exec(&mut deps, mock_env(), mock_info(TEST_CREATOR, &[]), 1) {

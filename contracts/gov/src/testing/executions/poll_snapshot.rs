@@ -4,7 +4,9 @@ use cosmwasm_std::{attr, Env, MessageInfo, Uint128};
 use crate::error::ContractError;
 use crate::executions::poll::snapshot;
 use crate::executions::ExecuteResult;
-use crate::testing::{mock_deps, mock_env_height, MockDeps, TEST_CREATOR, VOTING_TOKEN};
+use crate::testing::{
+    instantiate, mock_deps, mock_env_height, MockDeps, TEST_CREATOR, VOTING_TOKEN,
+};
 
 pub fn exec(deps: &mut MockDeps, env: Env, info: MessageInfo, poll_id: u64) -> ExecuteResult {
     snapshot(deps.as_mut(), env, info, poll_id)
@@ -13,9 +15,9 @@ pub fn exec(deps: &mut MockDeps, env: Env, info: MessageInfo, poll_id: u64) -> E
 #[test]
 fn success() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_msg = super::instantiate::default_msg();
+    let default_msg = instantiate::default_msg();
 
     deps.querier.with_token_balances(&[(
         &VOTING_TOKEN.to_string(),
@@ -46,9 +48,9 @@ fn success() {
 #[test]
 fn fail_height() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_msg = super::instantiate::default_msg();
+    let default_msg = instantiate::default_msg();
 
     deps.querier.with_token_balances(&[(
         &VOTING_TOKEN.to_string(),
@@ -70,9 +72,9 @@ fn fail_height() {
 #[test]
 fn fail_already_occurred() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
-    let default_msg = super::instantiate::default_msg();
+    let default_msg = instantiate::default_msg();
 
     deps.querier.with_token_balances(&[(
         &VOTING_TOKEN.to_string(),

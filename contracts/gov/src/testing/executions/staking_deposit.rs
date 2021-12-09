@@ -4,8 +4,8 @@ use cosmwasm_std::{attr, Deps, Env, MessageInfo, Response, Uint128};
 use crate::error::ContractError;
 use crate::executions::staking::stake_voting_tokens;
 use crate::executions::ExecuteResult;
-use crate::state::state::State;
-use crate::testing::{mock_deps, MockDeps, TEST_VOTER, VOTING_TOKEN};
+use crate::states::state::State;
+use crate::testing::{instantiate, mock_deps, MockDeps, TEST_VOTER, VOTING_TOKEN};
 
 pub fn exec(
     deps: &mut MockDeps,
@@ -46,7 +46,7 @@ pub fn assert_stake_tokens_result(
 #[test]
 fn success() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     deps.querier.with_token_balances(&[(
         &VOTING_TOKEN.to_string(),
@@ -67,7 +67,7 @@ fn success() {
 #[test]
 fn fail_unauthorized() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     deps.querier.with_token_balances(&[(
         &VOTING_TOKEN.to_string(),
@@ -90,7 +90,7 @@ fn fail_unauthorized() {
 #[test]
 fn fail_insufficient_funds() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     match exec(
         &mut deps,

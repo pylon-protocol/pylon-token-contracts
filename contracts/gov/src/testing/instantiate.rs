@@ -4,8 +4,8 @@ use pylon_token::gov_msg::InstantiateMsg;
 
 use crate::error::ContractError;
 use crate::executions::{instantiate, ExecuteResult};
-use crate::state::config::Config;
-use crate::state::state::State;
+use crate::states::config::Config;
+use crate::states::state::State;
 use crate::testing::{mock_deps, MockDeps, TEST_CREATOR, VOTING_TOKEN};
 
 pub fn exec(

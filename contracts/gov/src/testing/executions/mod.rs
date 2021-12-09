@@ -3,7 +3,6 @@ pub mod airdrop_claim;
 pub mod airdrop_deallocate;
 pub mod airdrop_instantiate;
 pub mod airdrop_update;
-pub mod instantiate;
 pub mod poll_cast_vote;
 pub mod poll_create;
 pub mod poll_end;

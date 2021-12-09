@@ -5,7 +5,7 @@ use pylon_token::gov_resp::{PollResponse, PollsResponse, VotersResponse, VotersR
 
 use crate::error::ContractError;
 use crate::queries::QueryResult;
-use crate::state::poll::{Poll, PollCategory, PollStatus, VoterInfo};
+use crate::states::poll::{Poll, PollCategory, PollStatus, VoterInfo};
 
 pub fn query_poll(deps: Deps, poll_id: u64) -> QueryResult {
     let poll = match Poll::may_load(deps.storage, &poll_id)? {

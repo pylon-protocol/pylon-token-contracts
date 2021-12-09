@@ -6,7 +6,7 @@ use pylon_token::gov_resp::ConfigResponse;
 use crate::error::ContractError;
 use crate::executions::{update_config, ExecuteResult};
 use crate::queries::config::query_config;
-use crate::testing::{mock_deps, MockDeps, TEST_CREATOR, TEST_VOTER};
+use crate::testing::{instantiate, mock_deps, MockDeps, TEST_CREATOR, TEST_VOTER};
 
 #[derive(Clone)]
 pub struct Message {
@@ -48,7 +48,7 @@ pub fn default_msg() -> Message {
 #[test]
 fn success() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     // try update owner
     let mut msg = default_msg();
@@ -88,7 +88,7 @@ fn success() {
 #[test]
 fn fail_unauthorized() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     match exec(
         &mut deps,

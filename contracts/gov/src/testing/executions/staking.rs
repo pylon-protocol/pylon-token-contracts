@@ -3,12 +3,12 @@ use cosmwasm_std::{attr, from_binary, Uint128};
 use pylon_token::gov_resp::StakerResponse;
 
 use crate::queries::bank::query_staker;
-use crate::testing::{mock_deps, TEST_VOTER, VOTING_TOKEN};
+use crate::testing::{instantiate, mock_deps, TEST_VOTER, VOTING_TOKEN};
 
 #[test]
 fn share_calculation() {
     let mut deps = mock_deps();
-    super::instantiate::default(&mut deps);
+    instantiate::default(&mut deps);
 
     // create 100 share
     deps.querier.with_token_balances(&[(
