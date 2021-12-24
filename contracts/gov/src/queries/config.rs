@@ -15,5 +15,6 @@ pub fn query_config(deps: Deps) -> QueryResult {
         timelock_period: config.timelock_period,
         proposal_deposit: config.proposal_deposit,
         snapshot_period: config.snapshot_period,
+        unstaking_period: config.unstaking_period,
     })?)
 }
