@@ -213,6 +213,8 @@ fn to_response(
     StakerResponse {
         balance,
         share: token_manager.share,
+        latest_claim_id: token_manager.latest_claim_id,
+        last_unlocked_claim_id: token_manager.last_unlocked_claim_id,
         locked_balance,
         claimable_airdrop,
     }
