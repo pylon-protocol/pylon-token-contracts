@@ -15,6 +15,7 @@ pub struct InstantiateMsg {
     pub timelock_period: u64,
     pub proposal_deposit: Uint128,
     pub snapshot_period: u64,
+    pub unstaking_period: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -52,6 +53,9 @@ pub enum StakingMsg {
     UnstakeInternal {
         sender: String,
         amount: Option<Uint128>,
+    },
+    Unlock {
+        target: Option<String>,
     },
 }
 
@@ -134,6 +138,16 @@ pub enum QueryMsg {
     ApiVersion {},
     Config {},
     State {},
+    Claim {
+        address: String,
+        claim_id: u64,
+    },
+    Claims {
+        address: String,
+        start_after: Option<u64>,
+        limit: Option<u32>,
+        order: Option<OrderBy>,
+    },
     Staker {
         address: String,
     },

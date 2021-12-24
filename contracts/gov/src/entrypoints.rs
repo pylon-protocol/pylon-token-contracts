@@ -89,6 +89,9 @@ pub fn execute(
             StakingMsg::UnstakeInternal { sender, amount } => {
                 executions::staking::withdraw_voting_tokens(deps, env, info, sender, amount)
             }
+            StakingMsg::Unlock { target } => {
+                executions::staking::unlock_voting_tokens(deps, env, info, target)
+            }
         },
         ExecuteMsg::Airdrop(msg) => match msg {
             AirdropMsg::Instantiate {
@@ -155,6 +158,15 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
         QueryMsg::ApiVersion {} => queries::query_api_version(deps),
         QueryMsg::Config {} => queries::config::query_config(deps),
         QueryMsg::State {} => queries::state::query_state(deps),
+        QueryMsg::Claim { address, claim_id } => {
+            queries::bank::query_token_claim(deps, env, address, claim_id)
+        }
+        QueryMsg::Claims {
+            address,
+            start_after,
+            limit,
+            order,
+        } => queries::bank::query_token_claims(deps, env, address, start_after, limit, order),
         QueryMsg::Staker { address } => queries::bank::query_staker(deps, env, address),
         QueryMsg::Stakers {
             start_after,

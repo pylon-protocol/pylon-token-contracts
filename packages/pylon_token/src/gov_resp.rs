@@ -74,6 +74,17 @@ pub struct PollCountResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema)]
+pub struct ClaimResponse {
+    pub time: u64,
+    pub amount: Uint128,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema)]
+pub struct ClaimsResponse {
+    pub claims: Vec<(u64, ClaimResponse)>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema)]
 pub struct StakerResponse {
     pub balance: Uint128,
     pub share: Uint128,
