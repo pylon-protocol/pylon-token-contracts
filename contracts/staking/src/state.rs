@@ -18,6 +18,7 @@ pub struct ConfigV1 {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConfigV2 {
+    pub governance: CanonicalAddr,
     pub pylon_token: CanonicalAddr,
     pub staking_token: Vec<CanonicalAddr>, // index = token_version
     pub distribution_schedule: Vec<(u64, u64, Uint128)>,

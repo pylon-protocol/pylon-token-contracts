@@ -29,6 +29,7 @@ pub fn instantiate(
     store_config(
         deps.storage,
         &ConfigV2 {
+            governance: deps.api.addr_canonicalize(msg.governance.as_str())?,
             pylon_token: deps.api.addr_canonicalize(&msg.pylon_token)?,
             staking_token: vec![deps.api.addr_canonicalize(&msg.staking_token)?],
             distribution_schedule: msg.distribution_schedule,
@@ -233,10 +234,14 @@ pub fn withdraw(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Respons
 pub fn migrate_staking(
     deps: DepsMut,
     env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     new_staking_token: String,
 ) -> StdResult<Response> {
     let mut config: ConfigV2 = read_config(deps.storage)?;
+    if config.governance != deps.api.addr_canonicalize(info.sender.as_str())? {
+        return Err(StdError::generic_err("unauthorized"));
+    }
+
     let mut state: StateV2 = read_state(deps.storage, (config.staking_token.len() - 1) as u64)?;
 
     // compute global reward, sets last_distributed_height to env.block.height
@@ -440,12 +445,13 @@ pub fn query_staker_info(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> StdResult<Response> {
     let legacy_config: ConfigV1 = singleton_read(deps.storage, b"config").load()?;
     let genesis = legacy_config.distribution_schedule[0].0;
     store_config(
         deps.storage,
         &ConfigV2 {
+            governance: deps.api.addr_canonicalize(msg.governance.as_str())?,
             pylon_token: legacy_config.pylon_token,
             staking_token: vec![legacy_config.staking_token],
             distribution_schedule: legacy_config.distribution_schedule,
