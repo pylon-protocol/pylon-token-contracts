@@ -16,6 +16,7 @@ fn proper_initialization() {
     let mut deps = mock_dependencies(&[]);
 
     let msg = InstantiateMsg {
+        governance: "gov0000".to_string(),
         pylon_token: "reward0000".to_string(),
         staking_token: "staking0000".to_string(),
         distribution_schedule: vec![(100, 200, Uint128::from(1000000u128))],
@@ -65,6 +66,7 @@ fn test_bond_tokens() {
     let mut deps = mock_dependencies(&[]);
 
     let msg = InstantiateMsg {
+        governance: "gov0000".to_string(),
         pylon_token: "reward0000".to_string(),
         staking_token: "staking0000".to_string(),
         distribution_schedule: vec![
@@ -204,6 +206,7 @@ fn test_unbond() {
     let mut deps = mock_dependencies(&[]);
 
     let msg = InstantiateMsg {
+        governance: "gov0000".to_string(),
         pylon_token: "reward0000".to_string(),
         staking_token: "staking0000".to_string(),
         distribution_schedule: vec![
@@ -264,6 +267,7 @@ fn test_compute_reward() {
     let mut deps = mock_dependencies(&[]);
 
     let msg = InstantiateMsg {
+        governance: "gov0000".to_string(),
         pylon_token: "reward0000".to_string(),
         staking_token: "staking0000".to_string(),
         distribution_schedule: vec![
@@ -380,6 +384,7 @@ fn test_withdraw() {
     let mut deps = mock_dependencies(&[]);
 
     let msg = InstantiateMsg {
+        governance: "gov0000".to_string(),
         pylon_token: "reward0000".to_string(),
         staking_token: "staking0000".to_string(),
         distribution_schedule: vec![
