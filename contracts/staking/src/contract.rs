@@ -251,10 +251,10 @@ pub fn migrate_staking(
         config.distribution_schedule.iter().map(|item| item.2).sum();
 
     let block_height = env.block.height;
-    // eliminate distribution slots that have not started
+    // eliminate distribution slots that have been started
     config
         .distribution_schedule
-        .retain(|slot| slot.0 < block_height);
+        .retain(|slot| slot.0 >= block_height);
 
     let mut distributed_amount = Uint128::zero();
     for s in config.distribution_schedule.iter_mut() {
@@ -446,30 +446,35 @@ pub fn query_staker_info(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> StdResult<Response> {
-    let legacy_config: ConfigV1 = singleton_read(deps.storage, b"config").load()?;
-    let genesis = legacy_config.distribution_schedule[0].0;
-    store_config(
-        deps.storage,
-        &ConfigV2 {
-            governance: deps.api.addr_canonicalize(msg.governance.as_str())?,
-            pylon_token: legacy_config.pylon_token,
-            staking_token: vec![legacy_config.staking_token],
-            distribution_schedule: legacy_config.distribution_schedule,
-        },
-    )?;
+    match msg {
+        MigrateMsg::Migrate { governance } => {
+            let legacy_config: ConfigV1 = singleton_read(deps.storage, b"config").load()?;
+            let genesis = legacy_config.distribution_schedule[0].0;
+            store_config(
+                deps.storage,
+                &ConfigV2 {
+                    governance: deps.api.addr_canonicalize(governance.as_str())?,
+                    pylon_token: legacy_config.pylon_token,
+                    staking_token: vec![legacy_config.staking_token],
+                    distribution_schedule: legacy_config.distribution_schedule,
+                },
+            )?;
 
-    let legacy_state: StateV1 = singleton_read(deps.storage, b"state").load()?;
-    store_state(
-        deps.storage,
-        0,
-        &StateV2 {
-            halted: false,
-            started_at: genesis,
-            last_distributed: legacy_state.last_distributed,
-            total_bond_amount: legacy_state.total_bond_amount,
-            global_reward_index: legacy_state.global_reward_index,
-        },
-    )?;
+            let legacy_state: StateV1 = singleton_read(deps.storage, b"state").load()?;
+            store_state(
+                deps.storage,
+                0,
+                &StateV2 {
+                    halted: false,
+                    started_at: genesis,
+                    last_distributed: legacy_state.last_distributed,
+                    total_bond_amount: legacy_state.total_bond_amount,
+                    global_reward_index: legacy_state.global_reward_index,
+                },
+            )?;
+        }
+        MigrateMsg::General {} => {}
+    }
 
     Ok(Response::default())
 }

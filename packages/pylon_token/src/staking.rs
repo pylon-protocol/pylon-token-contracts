@@ -34,8 +34,10 @@ pub enum Cw20HookMsg {
 
 /// We currently take no arguments for migrations
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct MigrateMsg {
-    pub governance: String,
+#[serde(rename_all = "snake_case")]
+pub enum MigrateMsg {
+    Migrate { governance: String },
+    General {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
