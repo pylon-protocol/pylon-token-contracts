@@ -40,6 +40,7 @@ pub struct MigrateMsg {}
 pub enum QueryMsg {
     Config {},
     State {
+        token_version: Option<u64>,
         block_height: Option<u64>,
     },
     StakerInfo {
@@ -52,13 +53,15 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConfigResponse {
     pub pylon_token: String,
-    pub staking_token: String,
+    pub staking_token: Vec<String>,
     pub distribution_schedule: Vec<(u64, u64, Uint128)>,
 }
 
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct StateResponse {
+    pub halted: bool,
+    pub started_at: u64,
     pub last_distributed: u64,
     pub total_bond_amount: Uint128,
     pub global_reward_index: Decimal,
@@ -68,6 +71,7 @@ pub struct StateResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct StakerInfoResponse {
     pub staker: String,
+    pub staking_token_version: u64,
     pub reward_index: Decimal,
     pub bond_amount: Uint128,
     pub pending_reward: Uint128,
