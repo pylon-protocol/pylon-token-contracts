@@ -20,6 +20,7 @@ pub fn query_token_claim(deps: Deps, _env: Env, address: String, claim_id: u64) 
     )?;
 
     Ok(to_binary(&ClaimResponse {
+        start: token_claim.start,
         time: token_claim.time,
         amount: token_claim.amount,
     })?)
@@ -48,6 +49,7 @@ pub fn query_token_claims(
                 (
                     *claim_id,
                     ClaimResponse {
+                        start: claim.start,
                         time: claim.time,
                         amount: claim.amount,
                     },

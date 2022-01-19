@@ -13,6 +13,7 @@ use crate::states::poll::VoterInfo;
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct TokenClaim {
+    pub start: u64,
     pub time: u64,
     pub amount: Uint128,
 }

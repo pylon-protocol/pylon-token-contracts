@@ -76,6 +76,7 @@ pub struct PollCountResponse {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema)]
 pub struct ClaimResponse {
+    pub start: u64,
     pub time: u64,
     pub amount: Uint128,
 }

@@ -118,6 +118,7 @@ pub fn withdraw_voting_tokens(
                 &sender_address_raw,
                 claim_id,
                 TokenClaim {
+                    start: env.block.time.seconds(),
                     time: env.block.time.seconds() + config.unstaking_period,
                     amount: Uint128::from(withdraw_amount),
                 },
