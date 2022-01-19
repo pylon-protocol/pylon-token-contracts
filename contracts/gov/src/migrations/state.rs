@@ -1,8 +1,8 @@
-use crate::constant::{CONTRACT_NAME, CONTRACT_VERSION};
 use cosmwasm_std::{DepsMut, Env, Order, Response};
 use cosmwasm_storage::ReadonlyBucket;
 use cw2::set_contract_version;
 
+use crate::constant::{CONTRACT_NAME, CONTRACT_VERSION};
 use crate::states::poll::Poll;
 use crate::states::PREFIX_POLL;
 
