@@ -1,8 +1,8 @@
 use crate::contract::{execute, instantiate, query_staker_info};
 use crate::mock_querier::mock_dependencies;
-use crate::state::{read_config, read_staker_info, read_state};
+use crate::state::{read_config, read_state};
 use cosmwasm_std::testing::{mock_env, mock_info};
-use cosmwasm_std::{to_binary, Api, Uint128};
+use cosmwasm_std::{to_binary, Uint128};
 use cw20::Cw20ReceiveMsg;
 use pylon_token::staking::{Cw20HookMsg, ExecuteMsg, InstantiateMsg};
 
@@ -23,7 +23,7 @@ fn migration_test() {
     };
 
     let info = mock_info("addr0000", &[]);
-    let _res = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+    let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
     let mut env = mock_env();
     env.block.height = 3585500u64;
