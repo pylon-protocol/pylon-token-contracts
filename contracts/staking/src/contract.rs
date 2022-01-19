@@ -105,6 +105,8 @@ pub fn bond(deps: DepsMut, env: Env, sender_addr: Addr, amount: Uint128) -> StdR
         let legacy_unbond_amount = staker_info.bond_amount;
         decrease_bond_amount(&mut legacy_state, &mut staker_info, legacy_unbond_amount)?;
 
+        // set to zero
+        staker_info.reward_index = state.global_reward_index;
         staker_info.staking_token_version = staking_token_version;
 
         store_state(deps.storage, legacy_token_version, &legacy_state)?;

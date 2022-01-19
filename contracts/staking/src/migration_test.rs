@@ -70,4 +70,7 @@ fn migration_test() {
     )
     .unwrap();
     println!("{:?}", resp);
+
+    let resp = query_staker_info(deps.as_ref(), "addr0000".to_string(), Some(8491943u64)).unwrap();
+    println!("{:?}", resp);
 }
