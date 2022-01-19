@@ -96,6 +96,8 @@ pub fn bond(deps: DepsMut, env: Env, sender_addr: Addr, amount: Uint128) -> StdR
     let mut state: StateV2 = read_state(deps.storage, staking_token_version)?;
     let mut staker_info: StakerInfoV2 = read_staker_info(deps.storage, &sender_addr_raw)?;
 
+    compute_reward(&config, &mut state, env.block.height);
+
     // legacy
     if staking_token_version != staker_info.staking_token_version {
         let legacy_token_version = staker_info.staking_token_version;
@@ -126,7 +128,6 @@ pub fn bond(deps: DepsMut, env: Env, sender_addr: Addr, amount: Uint128) -> StdR
     }
 
     // Compute global reward & staker reward
-    compute_reward(&config, &mut state, env.block.height);
     compute_staker_reward(&state, &mut staker_info)?;
 
     // Increase bond_amount
