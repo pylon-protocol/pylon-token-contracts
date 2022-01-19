@@ -250,11 +250,6 @@ pub fn migrate_staking(
     compute_reward(&config, &mut state, env.block.height);
 
     let block_height = env.block.height;
-    // eliminate distribution slots that have been started
-    config
-        .distribution_schedule
-        .retain(|slot| slot.0 >= block_height);
-
     let legacy_token_version = (config.staking_token.len() - 1) as u64;
     let new_token_version = legacy_token_version + 1;
     state.halted = true;
