@@ -300,12 +300,12 @@ pub fn migrate_staking(
         },
     )?;
 
-    let remaining_anc = total_distribution_amount.checked_sub(distributed_amount)?;
+    let remaining_mine = total_distribution_amount.checked_sub(distributed_amount)?;
 
     Ok(Response::new().add_attributes(vec![
         ("action", "migrate_staking"),
         ("distributed_amount", &distributed_amount.to_string()),
-        ("remaining_amount", &remaining_anc.to_string()),
+        ("remaining_amount", &remaining_mine.to_string()),
     ]))
 }
 
