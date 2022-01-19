@@ -247,35 +247,11 @@ pub fn migrate_staking(
     // compute global reward, sets last_distributed_height to env.block.height
     compute_reward(&config, &mut state, env.block.height);
 
-    let total_distribution_amount: Uint128 =
-        config.distribution_schedule.iter().map(|item| item.2).sum();
-
     let block_height = env.block.height;
     // eliminate distribution slots that have been started
     config
         .distribution_schedule
         .retain(|slot| slot.0 >= block_height);
-
-    let mut distributed_amount = Uint128::zero();
-    for s in config.distribution_schedule.iter_mut() {
-        if s.1 < block_height {
-            // all distributed
-            distributed_amount += s.2;
-        } else {
-            // partially distributed slot
-            let num_blocks = s.1 - s.0;
-            let distribution_amount_per_block: Decimal = Decimal::from_ratio(s.2, num_blocks);
-
-            let passed_blocks = block_height - s.0;
-            let distributed_amount_on_slot =
-                distribution_amount_per_block * Uint128::from(passed_blocks as u128);
-            distributed_amount += distributed_amount_on_slot;
-
-            // modify distribution slot
-            s.1 = block_height;
-            s.2 = distributed_amount_on_slot;
-        }
-    }
 
     let legacy_token_version = (config.staking_token.len() - 1) as u64;
     let new_token_version = legacy_token_version + 1;
@@ -300,13 +276,7 @@ pub fn migrate_staking(
         },
     )?;
 
-    let remaining_mine = total_distribution_amount.checked_sub(distributed_amount)?;
-
-    Ok(Response::new().add_attributes(vec![
-        ("action", "migrate_staking"),
-        ("distributed_amount", &distributed_amount.to_string()),
-        ("remaining_amount", &remaining_mine.to_string()),
-    ]))
+    Ok(Response::new().add_attributes(vec![("action", "migrate_staking")]))
 }
 
 fn increase_bond_amount(state: &mut StateV2, staker_info: &mut StakerInfoV2, amount: Uint128) {
