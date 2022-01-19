@@ -251,6 +251,10 @@ pub fn migrate_staking(
         config.distribution_schedule.iter().map(|item| item.2).sum();
 
     let block_height = env.block.height;
+    // eliminate distribution slots that have been started
+    config
+        .distribution_schedule
+        .retain(|slot| slot.0 >= block_height);
 
     let mut distributed_amount = Uint128::zero();
     for s in config.distribution_schedule.iter_mut() {
