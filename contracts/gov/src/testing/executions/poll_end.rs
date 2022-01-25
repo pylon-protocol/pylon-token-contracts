@@ -224,7 +224,7 @@ fn end_poll() {
             balance: Uint128::from(STAKE_AMOUNT),
             share: Uint128::from(STAKE_AMOUNT),
             latest_claim_id: 0,
-            last_unlocked_claim_id: 0,
+            last_unlocked_claim_id: None,
             locked_balance: vec![],
             claimable_airdrop: vec![],
         }

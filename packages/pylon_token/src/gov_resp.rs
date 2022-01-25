@@ -91,7 +91,7 @@ pub struct StakerResponse {
     pub balance: Uint128,
     pub share: Uint128,
     pub latest_claim_id: u64,
-    pub last_unlocked_claim_id: u64,
+    pub last_unlocked_claim_id: Option<u64>,
     pub claimable_airdrop: Vec<(u64, ClaimableAirdrop)>,
     pub locked_balance: Vec<(u64, VoterInfo)>,
 }

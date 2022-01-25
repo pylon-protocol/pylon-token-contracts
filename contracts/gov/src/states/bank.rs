@@ -19,33 +19,19 @@ pub struct TokenClaim {
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct LegacyTokenManager {
-    pub share: Uint128, // total staked balance
-    pub latest_claim_id: Option<u64>,
-    pub last_unlocked_claim_id: Option<u64>,
-    pub locked_balance: Vec<(u64, VoterInfo)>, // maps poll_id to weight voted
-}
-
-#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct TokenManager {
     pub share: Uint128, // total staked balance
     pub latest_claim_id: u64,
-    pub last_unlocked_claim_id: u64,
+    pub last_unlocked_claim_id: Option<u64>,
     pub locked_balance: Vec<(u64, VoterInfo)>, // maps poll_id to weight voted
 }
 
 impl TokenManager {
     pub fn load(storage: &dyn Storage, address: &CanonicalAddr) -> StdResult<TokenManager> {
-        let token_manager: LegacyTokenManager = ReadonlyBucket::new(storage, super::PREFIX_BANK)
+        let token_manager: TokenManager = ReadonlyBucket::new(storage, super::PREFIX_BANK)
             .load(address.as_slice())
             .unwrap_or_default();
-
-        Ok(TokenManager {
-            share: token_manager.share,
-            latest_claim_id: token_manager.latest_claim_id.unwrap_or_default(),
-            last_unlocked_claim_id: token_manager.last_unlocked_claim_id.unwrap_or_default(),
-            locked_balance: token_manager.locked_balance,
-        })
+        Ok(token_manager)
     }
 
     pub fn load_range(
@@ -64,15 +50,10 @@ impl TokenManager {
             .range(start.as_deref(), end.as_deref(), order_by.into())
             .take(limit)
             .map(
-                |elem: StdResult<(Vec<u8>, LegacyTokenManager)>| -> StdResult<(CanonicalAddr, TokenManager)> {
+                |elem: StdResult<(Vec<u8>, TokenManager)>| -> StdResult<(CanonicalAddr, TokenManager)> {
                     let (k, v) = elem.unwrap();
 
-                    Ok((CanonicalAddr::from(k), TokenManager{
-                        share: v.share,
-                        latest_claim_id: v.latest_claim_id.unwrap_or_default(),
-                        last_unlocked_claim_id: v.last_unlocked_claim_id.unwrap_or_default(),
-                        locked_balance: v.locked_balance
-                    }))
+                    Ok((CanonicalAddr::from(k), v))
                 },
             )
             .collect()
@@ -98,8 +79,8 @@ impl TokenManager {
         order_by: Option<OrderBy>,
     ) -> StdResult<Vec<(u64, TokenClaim)>> {
         let (start, end, order_by) = match order_by {
-            Some(OrderBy::Asc) => (calc_range_start(start_after), None, OrderBy::Asc),
-            _ => (None, calc_range_end(start_after), OrderBy::Desc),
+            Some(OrderBy::Desc) => (None, calc_range_end(start_after), OrderBy::Desc),
+            _ => (calc_range_start(start_after), None, OrderBy::Asc),
         };
         let limit = limit.unwrap_or(DEFAULT_QUERY_LIMIT).min(MAX_QUERY_LIMIT) as usize;
 

@@ -1,4 +1,3 @@
-use crate::constant::MAX_QUERY_LIMIT;
 use cosmwasm_std::{
     to_binary, CanonicalAddr, CosmosMsg, DepsMut, Env, MessageInfo, Response, Storage, Uint128,
     WasmMsg,
@@ -6,6 +5,7 @@ use cosmwasm_std::{
 use cw20::Cw20ExecuteMsg;
 use terraswap::querier::query_token_balance;
 
+use crate::constant::MAX_QUERY_LIMIT;
 use crate::error::ContractError;
 use crate::executions::ExecuteResult;
 use crate::states::bank::{TokenClaim, TokenManager};
@@ -152,31 +152,29 @@ pub fn unlock_voting_tokens(
     let sender_address_raw = deps.api.addr_canonicalize(sender.as_str())?;
     let mut token_manager = TokenManager::load(deps.storage, &sender_address_raw)?;
 
-    if token_manager.latest_claim_id == token_manager.last_unlocked_claim_id {
-        return Err(ContractError::Unauthorized {});
-    }
-
     let claims = TokenManager::load_claim_range(
         deps.storage,
         &sender_address_raw,
-        Some(token_manager.last_unlocked_claim_id),
+        token_manager.last_unlocked_claim_id,
         Some(MAX_QUERY_LIMIT),
         None,
     )
     .unwrap();
+    if claims.is_empty() {
+        return Err(ContractError::NothingUnlocked {});
+    }
 
     let mut unlocked_amount = Uint128::zero();
-    let mut unlocked_claim_id = token_manager.last_unlocked_claim_id;
     for (claim_id, claim) in claims {
         if claim.time > env.block.time.seconds() {
             break;
         }
 
-        unlocked_claim_id = claim_id;
+        token_manager.last_unlocked_claim_id = Some(claim_id);
         unlocked_amount += claim.amount;
     }
 
-    token_manager.last_unlocked_claim_id = unlocked_claim_id;
+    TokenManager::save(deps.storage, &sender_address_raw, &token_manager)?;
 
     send_tokens(
         deps,
