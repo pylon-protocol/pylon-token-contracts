@@ -13,6 +13,7 @@ pub struct Config {
     pub pylon_token: CanonicalAddr,          // anchor token address
     pub distributor_contract: CanonicalAddr, // distributor contract to sent back rewards
     pub reward_factor: Decimal, // reward distribution rate to gov contract, left rewards sent back to distributor contract
+    pub enable_sweep: bool,
 }
 
 pub fn store_config(storage: &mut dyn Storage, config: &Config) -> StdResult<()> {

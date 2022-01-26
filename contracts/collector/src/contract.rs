@@ -2,11 +2,14 @@
 use cosmwasm_std::entry_point;
 
 use cosmwasm_std::{
-    attr, to_binary, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo, Reply,
-    Response, StdError, StdResult, SubMsg, WasmMsg,
+    attr, to_binary, Binary, CanonicalAddr, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env,
+    MessageInfo, Reply, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
+use cosmwasm_storage::singleton_read;
 use cw20::Cw20ExecuteMsg;
 use pylon_token::collector::{ConfigResponse, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use terraswap::asset::{Asset, AssetInfo, PairInfo};
 use terraswap::pair::ExecuteMsg as TerraswapExecuteMsg;
 use terraswap::querier::{query_balance, query_pair_info, query_token_balance};
@@ -28,6 +31,7 @@ pub fn instantiate(
             pylon_token: deps.api.addr_canonicalize(&msg.pylon_token)?,
             distributor_contract: deps.api.addr_canonicalize(&msg.distributor_contract)?,
             reward_factor: msg.reward_factor,
+            enable_sweep: true,
         },
     )?;
 
@@ -68,6 +72,10 @@ const SWEEP_REPLY_ID: u64 = 1;
 /// result ANC token to gov contract
 pub fn sweep(deps: DepsMut, env: Env, denom: String) -> StdResult<Response> {
     let config: Config = read_config(deps.storage)?;
+    if !config.enable_sweep {
+        return Err(StdError::generic_err("unauthorized"));
+    }
+
     let pylon_token = deps.api.addr_humanize(&config.pylon_token)?;
     let terraswap_factory_addr = deps.api.addr_humanize(&config.terraswap_factory)?;
 
@@ -206,7 +214,30 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     Ok(resp)
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct LegacyConfig {
+    pub gov_contract: CanonicalAddr,         // collected rewards receiver
+    pub terraswap_factory: CanonicalAddr,    // terraswap factory contract
+    pub pylon_token: CanonicalAddr,          // anchor token address
+    pub distributor_contract: CanonicalAddr, // distributor contract to sent back rewards
+    pub reward_factor: Decimal, // reward distribution rate to gov contract, left rewards sent back to distributor contract
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+    let legacy_config: LegacyConfig = singleton_read(deps.storage, b"config").load()?;
+
+    store_config(
+        deps.storage,
+        &Config {
+            gov_contract: legacy_config.gov_contract,
+            terraswap_factory: legacy_config.terraswap_factory,
+            pylon_token: legacy_config.pylon_token,
+            distributor_contract: legacy_config.distributor_contract,
+            reward_factor: legacy_config.reward_factor,
+            enable_sweep: false,
+        },
+    )?;
+
     Ok(Response::default())
 }
