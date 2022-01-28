@@ -34,6 +34,7 @@ pub struct MinterQuerier {
 }
 
 impl MinterQuerier {
+    #[allow(dead_code)]
     pub fn new(minter: String) -> Self {
         MinterQuerier {
             minter_addr: minter,
@@ -91,6 +92,7 @@ impl WasmMockQuerier {
         }
     }
 
+    #[allow(dead_code)]
     pub fn with_mine_minter(&mut self, minter: String) {
         self.minter_querier = MinterQuerier::new(minter);
     }
