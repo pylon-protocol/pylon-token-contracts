@@ -196,9 +196,8 @@ pub fn withdraw(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Respons
     let sender_addr_raw = deps.api.addr_canonicalize(info.sender.as_str())?;
 
     let config: ConfigV2 = read_config(deps.storage)?;
-    let staking_token_version = (config.staking_token.len() - 1) as u64;
-    let mut state: StateV2 = read_state(deps.storage, staking_token_version)?;
     let mut staker_info = read_staker_info(deps.storage, &sender_addr_raw)?;
+    let mut state: StateV2 = read_state(deps.storage, staker_info.staking_token_version)?;
 
     // Compute global reward & staker reward
     compute_reward(&config, &mut state, env.block.height);
@@ -216,7 +215,7 @@ pub fn withdraw(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Respons
     }
 
     // Store updated state
-    store_state(deps.storage, staking_token_version, &state)?;
+    store_state(deps.storage, staker_info.staking_token_version, &state)?;
 
     Ok(Response::new()
         .add_messages(vec![CosmosMsg::Wasm(WasmMsg::Execute {
