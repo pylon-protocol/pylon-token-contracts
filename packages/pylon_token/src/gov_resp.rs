@@ -21,6 +21,7 @@ pub struct ConfigResponse {
     pub timelock_period: u64,
     pub proposal_deposit: Uint128,
     pub snapshot_period: u64,
+    pub unstaking_period: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema)]
@@ -74,9 +75,23 @@ pub struct PollCountResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema)]
+pub struct ClaimResponse {
+    pub start: u64,
+    pub time: u64,
+    pub amount: Uint128,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema)]
+pub struct ClaimsResponse {
+    pub claims: Vec<(u64, ClaimResponse)>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema)]
 pub struct StakerResponse {
     pub balance: Uint128,
     pub share: Uint128,
+    pub latest_claim_id: u64,
+    pub last_unlocked_claim_id: Option<u64>,
     pub claimable_airdrop: Vec<(u64, ClaimableAirdrop)>,
     pub locked_balance: Vec<(u64, VoterInfo)>,
 }

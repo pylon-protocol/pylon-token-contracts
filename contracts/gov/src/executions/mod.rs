@@ -37,6 +37,7 @@ pub fn instantiate(
         expiration_period: 0u64, // Deprecated
         proposal_deposit: msg.proposal_deposit,
         snapshot_period: msg.snapshot_period,
+        unstaking_period: msg.unstaking_period,
     };
     config.validate()?;
 

@@ -11,6 +11,7 @@ pub static KEY_TMP_POLL_ID: &[u8] = b"tmp_poll_id";
 pub static PREFIX_AIRDROP: &[u8] = b"airdrop";
 pub static PREFIX_AIRDROP_REWARD: &[u8] = b"airdrop_reward";
 pub static PREFIX_BANK: &[u8] = b"bank";
+pub static PREFIX_BANK_UNLOCK_CLAIM: &[u8] = b"bank_unlock_claim";
 pub static PREFIX_POLL: &[u8] = b"poll";
 pub static PREFIX_POLL_VOTER: &[u8] = b"poll_voter";
 pub static PREFIX_POLL_INDEXER: &[u8] = b"poll_indexer";

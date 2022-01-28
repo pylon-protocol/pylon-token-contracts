@@ -124,6 +124,8 @@ fn success() {
         StakerResponse {
             balance: Uint128::from(22u128),
             share: Uint128::from(11u128),
+            latest_claim_id: 0,
+            last_unlocked_claim_id: None,
             locked_balance: vec![(
                 1u64,
                 GovVoterInfo {

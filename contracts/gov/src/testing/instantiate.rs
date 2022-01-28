@@ -35,6 +35,7 @@ pub fn default_msg() -> InstantiateMsg {
         timelock_period: 10000u64,
         proposal_deposit: Uint128::from(10000000000u128),
         snapshot_period: 10u64,
+        unstaking_period: 86400 * 14,
     }
 }
 
@@ -58,7 +59,8 @@ fn success() {
             timelock_period: default_msg.timelock_period,
             expiration_period: 0u64, // Deprecated
             proposal_deposit: default_msg.proposal_deposit,
-            snapshot_period: default_msg.snapshot_period
+            snapshot_period: default_msg.snapshot_period,
+            unstaking_period: default_msg.unstaking_period,
         }
     );
 

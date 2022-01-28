@@ -33,6 +33,9 @@ pub enum ContractError {
     #[error("Nothing staked")]
     NothingStaked {},
 
+    #[error("Nothing unlocked")]
+    NothingUnlocked {},
+
     #[error("User is trying to withdraw too many tokens")]
     InvalidWithdrawAmount {},
 

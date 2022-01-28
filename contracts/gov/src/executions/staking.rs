@@ -5,9 +5,10 @@ use cosmwasm_std::{
 use cw20::Cw20ExecuteMsg;
 use terraswap::querier::query_token_balance;
 
+use crate::constant::MAX_QUERY_LIMIT;
 use crate::error::ContractError;
 use crate::executions::ExecuteResult;
-use crate::states::bank::TokenManager;
+use crate::states::bank::{TokenClaim, TokenManager};
 use crate::states::config::Config;
 use crate::states::poll::{Poll, PollStatus, VoterInfo};
 use crate::states::state::State;
@@ -109,22 +110,79 @@ pub fn withdraw_voting_tokens(
             let share = user_share - withdraw_share;
             token_manager.share = Uint128::from(share);
 
+            let claim_id = token_manager.latest_claim_id;
+            token_manager.latest_claim_id += 1;
+
+            TokenManager::save_claim(
+                deps.storage,
+                &sender_address_raw,
+                claim_id,
+                TokenClaim {
+                    start: env.block.time.seconds(),
+                    time: env.block.time.seconds() + config.unstaking_period,
+                    amount: Uint128::from(withdraw_amount),
+                },
+            )?;
+
             TokenManager::save(deps.storage, &sender_address_raw, &token_manager)?;
 
             state.total_share = Uint128::from(total_share - withdraw_share);
             State::save(deps.storage, &state)?;
 
-            send_tokens(
-                deps,
-                &config.pylon_token,
-                &sender_address_raw,
-                withdraw_amount,
-                "withdraw",
-            )
+            Ok(Response::new().add_attributes(vec![
+                ("action", "withdraw"),
+                ("amount", &withdraw_amount.to_string()),
+                ("claim_id", &claim_id.to_string()),
+            ]))
         }
     } else {
         Err(ContractError::NothingStaked {})
     }
+}
+
+pub fn unlock_voting_tokens(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    target: Option<String>,
+) -> ExecuteResult {
+    let config = Config::load(deps.storage)?;
+
+    let sender = target.unwrap_or_else(|| info.sender.to_string());
+    let sender_address_raw = deps.api.addr_canonicalize(sender.as_str())?;
+    let mut token_manager = TokenManager::load(deps.storage, &sender_address_raw)?;
+
+    let claims = TokenManager::load_claim_range(
+        deps.storage,
+        &sender_address_raw,
+        token_manager.last_unlocked_claim_id,
+        Some(MAX_QUERY_LIMIT),
+        None,
+    )
+    .unwrap();
+    if claims.is_empty() {
+        return Err(ContractError::NothingUnlocked {});
+    }
+
+    let mut unlocked_amount = Uint128::zero();
+    for (claim_id, claim) in claims {
+        if claim.time > env.block.time.seconds() {
+            break;
+        }
+
+        token_manager.last_unlocked_claim_id = Some(claim_id);
+        unlocked_amount += claim.amount;
+    }
+
+    TokenManager::save(deps.storage, &sender_address_raw, &token_manager)?;
+
+    send_tokens(
+        deps,
+        &config.pylon_token,
+        &sender_address_raw,
+        unlocked_amount.u128(),
+        "unlock",
+    )
 }
 
 // removes not in-progress poll voter info & unlock tokens

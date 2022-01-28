@@ -1,26 +1,40 @@
-use crate::constant::{CONTRACT_NAME, CONTRACT_VERSION};
-use cosmwasm_std::{DepsMut, Env, Order, Response};
-use cosmwasm_storage::ReadonlyBucket;
-use cw2::set_contract_version;
+use cosmwasm_std::{CanonicalAddr, Decimal, DepsMut, Env, Response, Uint128};
+use cosmwasm_storage::singleton_read;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::states::poll::Poll;
-use crate::states::PREFIX_POLL;
+use crate::states::config::Config;
 
-pub fn migrate(deps: DepsMut, _env: Env) -> super::MigrateResult {
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION).unwrap();
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct LegacyConfig {
+    pub owner: CanonicalAddr,
+    pub pylon_token: CanonicalAddr,
+    pub quorum: Decimal,
+    pub threshold: Decimal,
+    pub voting_period: u64,
+    pub timelock_period: u64,
+    pub expiration_period: u64,
+    pub proposal_deposit: Uint128,
+    pub snapshot_period: u64,
+}
 
-    let polls: Vec<Poll> = ReadonlyBucket::<Poll>::new(deps.storage, PREFIX_POLL)
-        .range(None, None, Order::Ascending)
-        .map(|item| -> Poll {
-            let (_, v) = item.unwrap();
-            v
-        })
-        .collect();
-
-    for poll in polls.iter() {
-        Poll::index_status(deps.storage, &poll.id, &poll.status).unwrap();
-        Poll::index_category(deps.storage, &poll.id, &poll.category).unwrap();
-    }
+pub fn migrate(deps: DepsMut, _env: Env, unstaking_period: u64) -> super::MigrateResult {
+    let config: LegacyConfig = singleton_read(deps.storage, b"config").load()?;
+    Config::save(
+        deps.storage,
+        &Config {
+            owner: config.owner,
+            pylon_token: config.pylon_token,
+            quorum: config.quorum,
+            threshold: config.threshold,
+            voting_period: config.voting_period,
+            timelock_period: config.timelock_period,
+            expiration_period: config.expiration_period,
+            proposal_deposit: config.proposal_deposit,
+            snapshot_period: config.snapshot_period,
+            unstaking_period,
+        },
+    )?;
 
     Ok(Response::default())
 }

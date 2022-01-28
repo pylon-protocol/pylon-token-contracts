@@ -4,11 +4,12 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Reply, Response, WasmMsg,
 };
+use cw2::set_contract_version;
 use pylon_token::gov_msg::{
     AirdropMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, PollMsg, QueryMsg, StakingMsg,
 };
 
-use crate::constant::POLL_EXECUTE_REPLY_ID;
+use crate::constant::{CONTRACT_NAME, CONTRACT_VERSION, POLL_EXECUTE_REPLY_ID};
 use crate::error::ContractError;
 use crate::states::poll::Poll;
 use crate::{executions, migrations, queries};
@@ -89,6 +90,9 @@ pub fn execute(
             StakingMsg::UnstakeInternal { sender, amount } => {
                 executions::staking::withdraw_voting_tokens(deps, env, info, sender, amount)
             }
+            StakingMsg::Unlock { target } => {
+                executions::staking::unlock_voting_tokens(deps, env, info, target)
+            }
         },
         ExecuteMsg::Airdrop(msg) => match msg {
             AirdropMsg::Instantiate {
@@ -155,6 +159,15 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
         QueryMsg::ApiVersion {} => queries::query_api_version(deps),
         QueryMsg::Config {} => queries::config::query_config(deps),
         QueryMsg::State {} => queries::state::query_state(deps),
+        QueryMsg::Claim { address, claim_id } => {
+            queries::bank::query_token_claim(deps, env, address, claim_id)
+        }
+        QueryMsg::Claims {
+            address,
+            start_after,
+            limit,
+            order,
+        } => queries::bank::query_token_claims(deps, env, address, start_after, limit, order),
         QueryMsg::Staker { address } => queries::bank::query_staker(deps, env, address),
         QueryMsg::Stakers {
             start_after,
@@ -210,8 +223,12 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> migrations::MigrateResult {
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION).unwrap();
+
     match msg {
-        MigrateMsg::State {} => migrations::state::migrate(deps, env),
+        MigrateMsg::State { unstaking_period } => {
+            migrations::state::migrate(deps, env, unstaking_period)
+        }
         MigrateMsg::General {} => Ok(Response::default()),
     }
 }
