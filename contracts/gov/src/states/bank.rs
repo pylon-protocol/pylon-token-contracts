@@ -19,6 +19,14 @@ pub struct TokenClaim {
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct LegacyTokenManager {
+    pub share: Uint128, // total staked balance
+    pub latest_claim_id: Option<u64>,
+    pub last_unlocked_claim_id: Option<u64>,
+    pub locked_balance: Vec<(u64, VoterInfo)>, // maps poll_id to weight voted
+}
+
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct TokenManager {
     pub share: Uint128, // total staked balance
     pub latest_claim_id: u64,
@@ -28,10 +36,16 @@ pub struct TokenManager {
 
 impl TokenManager {
     pub fn load(storage: &dyn Storage, address: &CanonicalAddr) -> StdResult<TokenManager> {
-        let token_manager: TokenManager = ReadonlyBucket::new(storage, super::PREFIX_BANK)
-            .load(address.as_slice())
+        let token_manager: LegacyTokenManager = ReadonlyBucket::new(storage, super::PREFIX_BANK)
+            .may_load(address.as_slice())?
             .unwrap_or_default();
-        Ok(token_manager)
+
+        Ok(TokenManager {
+            share: token_manager.share,
+            latest_claim_id: token_manager.latest_claim_id.unwrap_or_default(),
+            last_unlocked_claim_id: token_manager.last_unlocked_claim_id,
+            locked_balance: token_manager.locked_balance,
+        })
     }
 
     pub fn load_range(
@@ -50,10 +64,15 @@ impl TokenManager {
             .range(start.as_deref(), end.as_deref(), order_by.into())
             .take(limit)
             .map(
-                |elem: StdResult<(Vec<u8>, TokenManager)>| -> StdResult<(CanonicalAddr, TokenManager)> {
+                |elem: StdResult<(Vec<u8>, LegacyTokenManager)>| -> StdResult<(CanonicalAddr, TokenManager)> {
                     let (k, v) = elem.unwrap();
 
-                    Ok((CanonicalAddr::from(k), v))
+                    Ok((CanonicalAddr::from(k), TokenManager{
+                        share: v.share,
+                        latest_claim_id: v.latest_claim_id.unwrap_or_default(),
+                        last_unlocked_claim_id: v.last_unlocked_claim_id,
+                        locked_balance: v.locked_balance
+                    }))
                 },
             )
             .collect()

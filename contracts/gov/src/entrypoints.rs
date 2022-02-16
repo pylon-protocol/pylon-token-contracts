@@ -222,13 +222,11 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> migrations::MigrateResult {
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> migrations::MigrateResult {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION).unwrap();
 
     match msg {
-        MigrateMsg::State { unstaking_period } => {
-            migrations::state::migrate(deps, env, unstaking_period)
-        }
+        MigrateMsg::State { .. } => Ok(Response::default()),
         MigrateMsg::General {} => Ok(Response::default()),
     }
 }
