@@ -82,7 +82,7 @@ pub fn withdraw_voting_tokens(
         let config = Config::load(deps.storage)?;
         let mut state = State::load(deps.storage)?;
 
-        // Load total share & total balance except proposal deposit amount
+        // Load total share & total balance except proposal deposit amount & stake amount in unbonding process
         let total_share = state.total_share.u128();
         let total_balance = query_token_balance(
             &deps.querier,
@@ -90,6 +90,7 @@ pub fn withdraw_voting_tokens(
             env.contract.address,
         )?
         .checked_sub(state.total_deposit)?
+        .checked_sub(state.total_unbondings)?
         .u128();
 
         let locked_balance =
@@ -107,12 +108,7 @@ pub fn withdraw_voting_tokens(
         if locked_share + withdraw_share > user_share {
             Err(ContractError::InvalidWithdrawAmount {})
         } else {
-            let share = user_share - withdraw_share;
-            token_manager.share = Uint128::from(share);
-
             let claim_id = token_manager.latest_claim_id;
-            token_manager.latest_claim_id += 1;
-
             TokenManager::save_claim(
                 deps.storage,
                 &sender_address_raw,
@@ -124,9 +120,12 @@ pub fn withdraw_voting_tokens(
                 },
             )?;
 
+            token_manager.share -= Uint128::from(withdraw_share);
+            token_manager.latest_claim_id += 1;
             TokenManager::save(deps.storage, &sender_address_raw, &token_manager)?;
 
-            state.total_share = Uint128::from(total_share - withdraw_share);
+            state.total_share -= Uint128::from(withdraw_share);
+            state.total_unbondings += Uint128::from(withdraw_amount);
             State::save(deps.storage, &state)?;
 
             Ok(Response::new().add_attributes(vec![
@@ -161,7 +160,7 @@ pub fn unlock_voting_tokens(
     )
     .unwrap();
     if claims.is_empty() {
-        return Err(ContractError::NothingUnlocked {});
+        return Ok(Response::default());
     }
 
     let mut unlocked_amount = Uint128::zero();

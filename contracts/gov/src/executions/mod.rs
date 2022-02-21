@@ -45,6 +45,7 @@ pub fn instantiate(
         poll_count: 0,
         total_share: Uint128::zero(),
         total_deposit: Uint128::zero(),
+        total_unbondings: Uint128::zero(),
         total_airdrop_count: 0,
         airdrop_update_candidates: vec![],
     };

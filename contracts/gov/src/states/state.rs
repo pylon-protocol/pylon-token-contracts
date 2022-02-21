@@ -8,6 +8,7 @@ pub struct State {
     pub poll_count: u64,
     pub total_share: Uint128,
     pub total_deposit: Uint128,
+    pub total_unbondings: Uint128,
     pub total_airdrop_count: u64,
     pub airdrop_update_candidates: Vec<u64>,
 }

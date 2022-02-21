@@ -37,6 +37,7 @@ pub fn assert_stake_tokens_result(
             poll_count,
             total_share: Uint128::from(total_share),
             total_deposit: Uint128::from(total_deposit),
+            total_unbondings: Uint128::zero(),
             total_airdrop_count: 0,
             airdrop_update_candidates: vec![]
         }

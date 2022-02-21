@@ -245,6 +245,6 @@ impl fmt::Display for VoteOption {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum MigrateMsg {
-    State { unstaking_period: u64 },
+    State { total_unbondings: Uint128 },
     General {},
 }

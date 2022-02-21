@@ -226,7 +226,7 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> migrations::Migrate
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION).unwrap();
 
     match msg {
-        MigrateMsg::State { .. } => Ok(Response::default()),
+        MigrateMsg::State { total_unbondings } => migrations::state(deps, total_unbondings),
         MigrateMsg::General {} => Ok(Response::default()),
     }
 }

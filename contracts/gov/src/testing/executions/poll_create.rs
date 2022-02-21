@@ -119,6 +119,7 @@ pub fn assert_create_poll_result(
             poll_count: 1,
             total_share: Uint128::zero(),
             total_deposit: instantiate::default_msg().proposal_deposit,
+            total_unbondings: Uint128::zero(),
             total_airdrop_count: 0,
             airdrop_update_candidates: vec![]
         }
