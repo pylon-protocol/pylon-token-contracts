@@ -176,7 +176,7 @@ pub fn unlock_voting_tokens(
     TokenManager::save(deps.storage, &sender_address_raw, &token_manager)?;
 
     let mut state = State::load(deps.storage)?;
-    state.total_unbondings -= Uint128::from(unlocked_amount);
+    state.total_unbondings -= unlocked_amount;
     State::save(deps.storage, &state)?;
 
     send_tokens(
