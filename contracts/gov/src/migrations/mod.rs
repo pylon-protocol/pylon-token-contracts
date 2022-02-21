@@ -18,7 +18,7 @@ pub struct LegacyState {
 }
 
 pub fn state(deps: DepsMut, total_unbondings: Uint128) -> MigrateResult {
-    let state: LegacyState = singleton_read(deps.storage, b"config").load()?;
+    let state: LegacyState = singleton_read(deps.storage, b"state").load()?;
 
     State::save(
         deps.storage,
