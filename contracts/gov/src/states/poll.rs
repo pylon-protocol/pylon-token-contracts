@@ -1,7 +1,7 @@
 use cosmwasm_std::{Binary, CanonicalAddr, StdError, StdResult, Storage, Uint128};
 use cosmwasm_storage::{Bucket, ReadonlyBucket, ReadonlySingleton, Singleton};
 use pylon_token::common::OrderBy;
-use pylon_token::gov_msg::{
+use pylon_token::gov::{
     PollCategory as GovPollCategory, PollStatus as GovPollStatus, VoteOption as GovVoteOption,
     VoterInfo as GovVoterInfo,
 };

@@ -1,13 +1,11 @@
-use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{from_binary, Uint128};
-use pylon_token::gov_msg::ClaimableAirdrop;
-use pylon_token::gov_resp::{StakerResponse, StakersResponse};
-
 use crate::queries::bank::{query_staker, query_stakers};
 use crate::testing::executions::{airdrop_instantiate, airdrop_update, staking_deposit};
 use crate::testing::{
     instantiate, mock_deps, mock_env_height, TEST_TOKEN, TEST_VOTER, VOTING_TOKEN,
 };
+use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
+use cosmwasm_std::{from_binary, Uint128};
+use pylon_token::gov::{ClaimableAirdrop, StakerResponse, StakersResponse};
 
 #[test]
 fn stakers_filter_zero_reward() {

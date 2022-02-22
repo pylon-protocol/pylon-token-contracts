@@ -1,9 +1,8 @@
-use cosmwasm_std::{to_binary, Deps};
-use pylon_token::common::OrderBy;
-use pylon_token::gov_resp::{AirdropResponse, AirdropsResponse};
-
 use crate::queries::QueryResult;
 use crate::states::airdrop::Airdrop;
+use cosmwasm_std::{to_binary, Deps};
+use pylon_token::common::OrderBy;
+use pylon_token::gov::{AirdropResponse, AirdropsResponse};
 
 pub fn query_airdrop(deps: Deps, airdrop_id: u64) -> QueryResult {
     let airdrop = Airdrop::load(deps.storage, &airdrop_id).unwrap();

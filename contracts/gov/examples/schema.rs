@@ -2,8 +2,9 @@ use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 use std::env::current_dir;
 use std::fs::create_dir_all;
 
-use pylon_token::gov_msg::{Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
-use pylon_token::gov_resp::{ConfigResponse, PollResponse, StakerResponse};
+use pylon_token::gov::{
+    ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, PollResponse, QueryMsg, StakerResponse,
+};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

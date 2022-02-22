@@ -3,7 +3,7 @@ use cosmwasm_std::{
     WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
-use pylon_token::gov_msg::{ExecuteMsg, PollExecuteMsg, PollMsg};
+use pylon_token::gov::{ExecuteMsg, PollExecuteMsg, PollMsg};
 use terraswap::querier::query_token_balance;
 
 use crate::constant::POLL_EXECUTE_REPLY_ID;
