@@ -1,12 +1,11 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use std::cmp::min;
-use std::ops::Mul;
 
 use astroport::{asset, pair};
 use cosmwasm_std::{
-    coin, coins, to_binary, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo, Response,
-    StdError, StdResult, Uint128, WasmMsg,
+    to_binary, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdError,
+    StdResult, Uint128, WasmMsg,
 };
 use moneymarket::market;
 use pylon_token::collector;
@@ -15,6 +14,7 @@ use crate::instructions::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::querier;
 use crate::states::{Config, CONFIG};
 
+#[allow(dead_code)]
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -41,6 +41,7 @@ pub fn instantiate(
     Ok(Response::default())
 }
 
+#[allow(dead_code)]
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> StdResult<Response> {
     let denom = "uusd";
@@ -78,7 +79,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
             let config = CONFIG.load(deps.storage)?;
             let ust_balance = deps
                 .querier
-                .query_balance(env.contract.address, denom)?
+                .query_balance(env.contract.address.clone(), denom)?
                 .amount
                 - config.gas_reserve;
 
@@ -86,21 +87,21 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                 CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: env.contract.address.to_string(),
                     msg: to_binary(&ExecuteMsg::StrategyAnchor {
-                        amount: ust_balance.multiply_ratio(1, 2),
+                        amount: ust_balance.multiply_ratio(1u128, 2u128), // 50%
                     })?,
                     funds: vec![],
                 }),
                 CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: env.contract.address.to_string(),
                     msg: to_binary(&ExecuteMsg::StrategyProvideLiquidity {
-                        amount: ust_balance.multiply_ratio(1, 4),
+                        amount: ust_balance.multiply_ratio(1u128, 4u128), // 25%
                     })?,
                     funds: vec![],
                 }),
                 CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: env.contract.address.to_string(),
                     msg: to_binary(&ExecuteMsg::StrategyBuyback {
-                        amount: ust_balance.multiply_ratio(1, 4),
+                        amount: ust_balance.multiply_ratio(1u128, 4u128), // 25%
                     })?,
                     funds: vec![],
                 }),
@@ -124,21 +125,18 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                     ("action", "strategy_anchor"),
                     (
                         "amount",
-                        asset::native_asset(denom.to_string(), amount).to_string(),
+                        &asset::native_asset(denom.to_string(), amount).to_string(),
                     ),
                 ]))
         }
         ExecuteMsg::StrategyProvideLiquidity { amount } => {
             let config = CONFIG.load(deps.storage)?;
-            let mine_balance = deps
-                .querier
-                .query_wasm_smart::<cw20::BalanceResponse>(
-                    config.mine,
-                    &cw20::Cw20QueryMsg::Balance {
-                        address: env.contract.address.to_string(),
-                    },
-                )?
-                .balance;
+            let mine_balance_resp: cw20::BalanceResponse = deps.querier.query_wasm_smart(
+                config.mine.clone(),
+                &cw20::Cw20QueryMsg::Balance {
+                    address: env.contract.address.to_string(),
+                },
+            )?;
 
             // 25% + MINE -> LP + stake
             let convert_amount =
@@ -154,7 +152,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                 contract_addr: config.mine.to_string(),
                 msg: to_binary(&cw20::Cw20ExecuteMsg::IncreaseAllowance {
                     spender: config.astroport_pair.to_string(),
-                    amount: mine_balance,
+                    amount: mine_balance_resp.balance,
                     expires: None,
                 })?,
                 funds: vec![],
@@ -166,16 +164,19 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                     assets: [
                         asset::native_asset(denom.to_string(), convert_amount.amount),
                         asset::token_asset(
-                            config.mine.clone(),
-                            Uint128::from(min(provide_amount.u128(), mine_balance.u128())),
+                            config.mine,
+                            Uint128::from(min(
+                                provide_amount.u128(),
+                                mine_balance_resp.balance.u128(),
+                            )),
                         ),
                     ],
-                    slippage_tolerance: Some(Decimal::from_ratio(1, 10)), // 10%
+                    slippage_tolerance: Some(Decimal::from_ratio(1u128, 10u128)), // 10%
                     auto_stake: Some(true),
                     receiver: Some(env.contract.address.to_string()),
                 })?,
-                funds: coins(convert_amount.u128(), denom),
-            })?;
+                funds: vec![convert_amount],
+            });
 
             Ok(Response::new()
                 .add_messages(vec![approve_msg, convert_msg])
@@ -183,7 +184,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                     ("action", "strategy_provide_liquidity"),
                     (
                         "amount",
-                        asset::native_asset(denom.to_string(), amount).to_string(),
+                        &asset::native_asset(denom.to_string(), amount).to_string(),
                     ),
                 ]))
         }
@@ -199,7 +200,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                 msg: to_binary(&pair::ExecuteMsg::Swap {
                     offer_asset: asset::native_asset(denom.to_string(), convert_amount.amount),
                     belief_price: None,
-                    max_spread: Some(Decimal::from_ratio(1, 100)), // 1%
+                    max_spread: Some(Decimal::from_ratio(1u128, 100u128)), // 1%
                     to: Some(config.pylon_governance.to_string()),
                 })?,
                 funds: vec![convert_amount],
@@ -211,21 +212,21 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                     ("action", "strategy_buyback"),
                     (
                         "amount",
-                        asset::native_asset(denom.to_string(), amount).to_string(),
+                        &asset::native_asset(denom.to_string(), amount).to_string(),
                     ),
                 ]))
         }
     }
-
-    Ok(Response::default())
 }
 
+#[allow(dead_code)]
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
     Ok(Binary::default())
 }
 
+#[allow(dead_code)]
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     Ok(Response::default())
 }

@@ -39,8 +39,8 @@ backtraces = ["cosmwasm-std/backtraces"]
 cw2 = "0.9.1"
 cw20 = "0.9.1"
 cw-storage-plus = "0.9.1"
-cosmwasm-std = { version = "0.16.0", features = ["iterator"] }
-cosmwasm-storage = { version = "0.16.0", features = ["iterator"] }
+cosmwasm-std = { version = "0.16.3", features = ["iterator"] }
+cosmwasm-storage = { version = "0.16.3", features = ["iterator"] }
 astroport = { git = "https://github.com/astroport-fi/astroport-core", version = "1.2.0" }
 moneymarket = { git = "https://github.com/anchor-protocol/money-market-contracts", version = "0.3.1" }
 pylon-token = "0.2.0"
@@ -49,4 +49,4 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.20"
 
 [dev-dependencies]
-cosmwasm-schema = "0.16.0"
+cosmwasm-schema = "0.16.3"

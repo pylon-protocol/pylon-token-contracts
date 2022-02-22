@@ -1,18 +1,18 @@
 use astroport::{asset, pair};
-use cosmwasm_std::{Querier, QuerierWrapper, StdResult, Uint128};
+use cosmwasm_std::{Addr, QuerierWrapper, StdResult, Uint128};
 
 pub fn simulate_swap(
     querier: &QuerierWrapper,
-    pair: &impl Into<String>,
+    pair: &Addr,
     offer_asset: asset::AssetInfo,
     amount: impl Into<Uint128>,
 ) -> StdResult<Uint128> {
-    let resp = querier.query_wasm_smart::<pair::SimulationResponse>(
+    let resp: pair::SimulationResponse = querier.query_wasm_smart(
         pair,
         &pair::QueryMsg::Simulation {
             offer_asset: asset::Asset {
                 info: offer_asset,
-                amount,
+                amount: amount.into(),
             },
         },
     )?;
