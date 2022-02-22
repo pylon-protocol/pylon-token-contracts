@@ -1,0 +1,52 @@
+[package]
+name = "pylon-treasury"
+version = "0.1.0"
+authors = [ "carter@pylon.money" ]
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/pylon-protocol/protocol-monorepo"
+homepage = "https://pylon.money"
+documentation = "https://docs.pylon.money"
+
+exclude = [
+    # rust-optimizer artifacts
+    "contract.wasm",
+    "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+cw2 = "0.9.1"
+cw20 = "0.9.1"
+cw-storage-plus = "0.9.1"
+cosmwasm-std = { version = "0.16.0", features = ["iterator"] }
+cosmwasm-storage = { version = "0.16.0", features = ["iterator"] }
+astroport = { git = "https://github.com/astroport-fi/astroport-core", version = "1.2.0" }
+moneymarket = { git = "https://github.com/anchor-protocol/money-market-contracts", version = "0.3.1" }
+pylon-token = "0.2.0"
+schemars = "0.8.1"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+thiserror = "1.0.20"
+
+[dev-dependencies]
+cosmwasm-schema = "0.16.0"
