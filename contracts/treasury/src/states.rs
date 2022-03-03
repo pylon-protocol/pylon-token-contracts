@@ -16,3 +16,10 @@ pub struct Config {
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct State {
+    pub prev_harvest_time: u64,
+}
+
+pub const STATE: Item<State> = Item::new("state");

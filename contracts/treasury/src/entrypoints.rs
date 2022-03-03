@@ -1,18 +1,23 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use std::cmp::min;
 
-use astroport::{asset, pair};
 use cosmwasm_std::{
-    to_binary, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdError,
-    StdResult, Uint128, WasmMsg,
+    coins, to_binary, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo,
+    Response, StdError, StdResult, Uint128, WasmMsg,
 };
+
+use astroport::asset::AssetInfo;
+use astroport::{asset, pair};
+use cw20::Cw20ExecuteMsg;
 use moneymarket::market;
 use pylon_token::collector;
+use std::cmp::min;
 
-use crate::instructions::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use crate::instructions::{
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, StateResponse,
+};
 use crate::querier;
-use crate::states::{Config, CONFIG};
+use crate::states::{Config, CONFIG, STATE};
 
 #[allow(dead_code)]
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -49,6 +54,14 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
     match msg {
         ExecuteMsg::Harvest {} => {
             let config = CONFIG.load(deps.storage)?;
+            if config.controller != info.sender {
+                return Err(StdError::generic_err("unauthorized"));
+            }
+
+            // update harvest time
+            let mut state = STATE.load(deps.storage)?;
+            state.prev_harvest_time = env.block.time.seconds();
+            STATE.save(deps.storage, &state)?;
 
             // TODO: migrate collector
             let collect_msg = to_binary(&collector::ExecuteMsg::Sweep {
@@ -84,6 +97,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                 - config.gas_reserve;
 
             Ok(Response::new().add_messages(vec![
+                // 50% -> aUST
                 CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: env.contract.address.to_string(),
                     msg: to_binary(&ExecuteMsg::StrategyAnchor {
@@ -91,6 +105,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                     })?,
                     funds: vec![],
                 }),
+                // 25% -> UST + MINE => LP + Staking
                 CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: env.contract.address.to_string(),
                     msg: to_binary(&ExecuteMsg::StrategyProvideLiquidity {
@@ -98,6 +113,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                     })?,
                     funds: vec![],
                 }),
+                // 25% -> UST => MINE -> Gov
                 CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: env.contract.address.to_string(),
                     msg: to_binary(&ExecuteMsg::StrategyBuyback {
@@ -216,13 +232,60 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                     ),
                 ]))
         }
+        ExecuteMsg::Withdraw { target } => {
+            let config = CONFIG.load(deps.storage)?;
+            if config.controller != info.sender || config.pylon_governance != info.sender {
+                return Err(StdError::generic_err("unauthorized"));
+            }
+
+            Ok(Response::new().add_message(match target.info {
+                AssetInfo::Token { contract_addr } => CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: contract_addr.to_string(),
+                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                        recipient: info.sender.to_string(),
+                        amount: target.amount,
+                    })?,
+                    funds: vec![],
+                }),
+                AssetInfo::NativeToken { denom } => CosmosMsg::Bank(BankMsg::Send {
+                    to_address: info.sender.to_string(),
+                    amount: coins(target.amount.u128(), denom),
+                }),
+            }))
+        }
     }
 }
 
 #[allow(dead_code)]
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
-    Ok(Binary::default())
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::Config {} => {
+            let config = CONFIG.load(deps.storage)?;
+
+            Ok(to_binary(&ConfigResponse {
+                mine: config.mine.to_string(),
+                controller: config.controller.to_string(),
+                gas_reserve: config.gas_reserve,
+                pylon_collector: config.pylon_collector.to_string(),
+                pylon_governance: config.pylon_governance.to_string(),
+                anchor_moneymarket: config.anchor_moneymarket.to_string(),
+                astroport_pair: config.astroport_pair.to_string(),
+                astroport_generator: config.astroport_generator.to_string(),
+            })?)
+        }
+        QueryMsg::State {} => {
+            let config = CONFIG.load(deps.storage)?;
+            let state = STATE.load(deps.storage)?;
+
+            let ust_balance = deps.querier.query_balance(config.pylon_collector, "uusd")?;
+
+            Ok(to_binary(&StateResponse {
+                prev_harvest_time: state.prev_harvest_time,
+                pending_ust: ust_balance.amount,
+            })?)
+        }
+    }
 }
 
 #[allow(dead_code)]
