@@ -4,41 +4,49 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-    pub gov_contract: String, // collected rewards receiver
-    pub terraswap_factory: String,
-    pub pylon_token: String,
-    pub distributor_contract: String,
-    pub reward_factor: Decimal,
+    pub gov: String,
+    pub treasury: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    /// Update config interface
-    /// to enable reward_factor update
-    UpdateConfig { reward_factor: Option<Decimal> },
-    /// Public Message
-    /// Sweep all given denom balance to ANC token
-    /// and execute Distribute message
-    Sweep { denom: String },
+    /// ## Description
+    /// Sends all UST in contract to treasury
+    ///
+    /// ## Example
+    /// ```typescript
+    /// {
+    ///   "collect": {}
+    /// }
+    /// ```
+    Collect {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
+    /// ## Description
+    /// Returns [`ConfigResponse`] which contains configuration of this contract.
+    ///
+    /// ## Example
+    /// ```typescript
+    /// {
+    ///   "config": {}
+    /// }
+    /// ```
     Config {},
 }
 
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConfigResponse {
-    pub gov_contract: String, // collected rewards receiver
-    pub terraswap_factory: String,
-    pub pylon_token: String,
-    pub distributor_contract: String,
-    pub reward_factor: Decimal,
+    pub gov: String,
+    pub treasury: String,
 }
 
-/// We currently take no arguments for migrations
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct MigrateMsg {}
+pub struct MigrateMsg {
+    pub gov: String,
+    pub treasury: String,
+}

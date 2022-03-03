@@ -1,25 +1,14 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{CanonicalAddr, Decimal, StdResult, Storage};
+use cosmwasm_std::{Addr, CanonicalAddr, Decimal, StdResult, Storage};
 use cosmwasm_storage::{singleton, singleton_read};
-
-static KEY_CONFIG: &[u8] = b"config";
+use cw_storage_plus::Item;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
-    pub gov_contract: CanonicalAddr,         // collected rewards receiver
-    pub terraswap_factory: CanonicalAddr,    // terraswap factory contract
-    pub pylon_token: CanonicalAddr,          // anchor token address
-    pub distributor_contract: CanonicalAddr, // distributor contract to sent back rewards
-    pub reward_factor: Decimal, // reward distribution rate to gov contract, left rewards sent back to distributor contract
-    pub enable_sweep: bool,
+    pub gov: Addr,
+    pub treasury: Addr,
 }
 
-pub fn store_config(storage: &mut dyn Storage, config: &Config) -> StdResult<()> {
-    singleton(storage, KEY_CONFIG).save(config)
-}
-
-pub fn read_config(storage: &dyn Storage) -> StdResult<Config> {
-    singleton_read(storage, KEY_CONFIG).load()
-}
+pub const CONFIG: Item<Confg> = Item::new("config");
