@@ -63,11 +63,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
             state.prev_harvest_time = env.block.time.seconds();
             STATE.save(deps.storage, &state)?;
 
-            // TODO: migrate collector
-            let collect_msg = to_binary(&collector::ExecuteMsg::Sweep {
-                denom: "".to_string(),
-            })?;
-
+            let collect_msg = to_binary(&collector::ExecuteMsg::Collect {})?;
             let collect_wasm_msg = CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: config.pylon_collector.to_string(),
                 msg: collect_msg,

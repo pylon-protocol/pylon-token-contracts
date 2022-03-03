@@ -43,7 +43,7 @@ cosmwasm-std = { version = "0.16.3", features = ["iterator"] }
 cosmwasm-storage = { version = "0.16.3", features = ["iterator"] }
 astroport = { git = "https://github.com/astroport-fi/astroport-core", version = "1.2.0" }
 moneymarket = { git = "https://github.com/anchor-protocol/money-market-contracts", version = "0.3.1" }
-pylon-token = "0.2.0"
+pylon-token = { version = "0.2.0", path = "../../packages/pylon_token" }
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.20"
