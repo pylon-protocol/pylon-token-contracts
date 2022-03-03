@@ -17,13 +17,13 @@ use crate::instructions::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, StateResponse,
 };
 use crate::querier;
-use crate::states::{Config, CONFIG, STATE};
+use crate::states::{Config, State, CONFIG, STATE};
 
 #[allow(dead_code)]
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
@@ -40,6 +40,13 @@ pub fn instantiate(
             anchor_moneymarket: api.addr_validate(&msg.anchor_moneymarket)?,
             astroport_pair: api.addr_validate(&msg.astroport_pair)?,
             astroport_generator: api.addr_validate(&msg.astroport_generator)?,
+        },
+    )?;
+
+    STATE.save(
+        deps.storage,
+        &State {
+            prev_harvest_time: env.block.time.seconds(),
         },
     )?;
 
@@ -71,7 +78,6 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
             });
 
             let harvest_msg = to_binary(&ExecuteMsg::HarvestInternal {})?;
-
             let harvest_wasm_msg = CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: env.contract.address.to_string(),
                 msg: harvest_msg,
