@@ -32,6 +32,7 @@ pub enum ExecuteMsg {
     /// }
     /// ```
     Harvest {},
+
     /// ## Description
     /// This instruction executes internal operation of Pylon Treasury's strategy
     ///
