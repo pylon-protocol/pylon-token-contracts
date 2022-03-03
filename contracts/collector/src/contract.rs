@@ -2,19 +2,12 @@
 use cosmwasm_std::entry_point;
 
 use cosmwasm_std::{
-    attr, coins, to_binary, BankMsg, Binary, CanonicalAddr, Coin, CosmosMsg, Decimal, Deps,
-    DepsMut, Env, MessageInfo, Reply, Response, StdError, StdResult, SubMsg, WasmMsg,
+    to_binary, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdError,
+    StdResult,
 };
-use cosmwasm_storage::singleton_read;
-use cw20::Cw20ExecuteMsg;
 use pylon_token::collector::{ConfigResponse, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use terraswap::asset::{Asset, AssetInfo, PairInfo};
-use terraswap::pair::ExecuteMsg as TerraswapExecuteMsg;
-use terraswap::querier::{query_balance, query_pair_info, query_token_balance};
 
-use crate::state::{read_config, store_config, Config, CONFIG};
+use crate::state::{Config, CONFIG};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -39,6 +32,10 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
     match msg {
         ExecuteMsg::Collect {} => {
             let config = CONFIG.load(deps.storage)?;
+            if info.sender != config.treasury {
+                return Err(StdError::generic_err("unauthorized"));
+            }
+
             let ust_balance = deps.querier.query_balance(env.contract.address, "uusd")?;
 
             Ok(Response::new().add_message(CosmosMsg::Bank(BankMsg::Send {
@@ -53,7 +50,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => {
-            let config = read_config(deps.storage)?;
+            let config = CONFIG.load(deps.storage)?;
 
             to_binary(&ConfigResponse {
                 gov: config.gov.to_string(),
