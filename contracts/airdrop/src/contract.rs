@@ -238,6 +238,17 @@ pub fn query_is_claimed(deps: Deps, stage: u8, address: String) -> StdResult<IsC
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
-    Ok(Response::default())
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    let config = read_config(deps.storage)?;
+
+    Ok(
+        Response::new().add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: deps.api.addr_humanize(&config.pylon_token)?.to_string(),
+            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                recipient: deps.api.addr_humanize(&config.owner)?.to_string(),
+                amount: msg.amount,
+            })?,
+            funds: vec![],
+        })),
+    )
 }
