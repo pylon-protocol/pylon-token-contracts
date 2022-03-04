@@ -59,7 +59,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
             Ok(Response::new()
                 .add_message(CosmosMsg::Bank(BankMsg::Send {
                     to_address: config.treasury.to_string(),
-                    amount: vec![ust_transfer],
+                    amount: vec![ust_transfer.clone()],
                 }))
                 .add_attributes(vec![
                     ("action", "collect"),
