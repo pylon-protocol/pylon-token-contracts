@@ -3,7 +3,7 @@ use cosmwasm_std::entry_point;
 
 use cosmwasm_std::{
     coins, to_binary, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo,
-    Response, StdError, StdResult, Uint128, WasmMsg,
+    Response, StdError, StdResult, WasmMsg,
 };
 
 use astroport::asset::AssetInfo;
@@ -11,12 +11,10 @@ use astroport::{asset, pair};
 use cw20::Cw20ExecuteMsg;
 use moneymarket::market;
 use pylon_token::collector;
-use std::cmp::min;
 
 use crate::instructions::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, StateResponse,
 };
-use crate::querier;
 use crate::states::{Config, State, CONFIG, STATE};
 
 #[allow(dead_code)]
@@ -127,6 +125,9 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
         }
         ExecuteMsg::StrategyAnchor { amount } => {
             let config = CONFIG.load(deps.storage)?;
+            if info.sender != env.contract.address && info.sender != config.controller {
+                return Err(StdError::generic_err("unauthorized"));
+            }
 
             // 50% -> aUST
             let convert_amount =
@@ -149,55 +150,69 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
         }
         ExecuteMsg::StrategyProvideLiquidity { amount } => {
             let config = CONFIG.load(deps.storage)?;
-            let mine_balance_resp: cw20::BalanceResponse = deps.querier.query_wasm_smart(
+            if info.sender != env.contract.address && info.sender != config.controller {
+                return Err(StdError::generic_err("unauthorized"));
+            }
+
+            let self_mine_balance = {
+                let resp: cw20::BalanceResponse = deps.querier.query_wasm_smart(
+                    config.mine.clone(),
+                    &cw20::Cw20QueryMsg::Balance {
+                        address: env.contract.address.to_string(),
+                    },
+                )?;
+
+                resp.balance
+            };
+
+            let token_resp: cw20::BalanceResponse = deps.querier.query_wasm_smart(
                 config.mine.clone(),
                 &cw20::Cw20QueryMsg::Balance {
-                    address: env.contract.address.to_string(),
+                    address: config.astroport_pair.to_string(),
                 },
             )?;
+            let pair_mine_balance = token_resp.balance;
+
+            let native_resp = deps.querier.query_balance(&config.astroport_pair, denom)?;
+            let pair_ust_balance = native_resp.amount;
 
             // 25% + MINE -> LP + stake
-            let convert_amount =
+            let convert_ust =
                 asset::native_asset(denom.to_string(), amount).deduct_tax(&deps.querier)?;
-            let provide_amount = querier::simulate_swap(
-                &deps.querier,
-                &config.astroport_pair,
-                asset::native_asset_info(denom.to_string()),
-                convert_amount.amount,
-            )?;
+
             // setup increase allowance message
             let approve_msg = CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: config.mine.to_string(),
                 msg: to_binary(&cw20::Cw20ExecuteMsg::IncreaseAllowance {
                     spender: config.astroport_pair.to_string(),
-                    amount: mine_balance_resp.balance,
+                    amount: self_mine_balance,
                     expires: None,
                 })?,
                 funds: vec![],
             });
+
             // setup lp provide message
-            let convert_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            let provide_msg = CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: config.astroport_pair.to_string(),
                 msg: to_binary(&pair::ExecuteMsg::ProvideLiquidity {
                     assets: [
-                        asset::native_asset(denom.to_string(), convert_amount.amount),
+                        asset::native_asset(denom.to_string(), convert_ust.amount),
                         asset::token_asset(
                             config.mine,
-                            Uint128::from(min(
-                                provide_amount.u128(),
-                                mine_balance_resp.balance.u128(),
-                            )),
+                            convert_ust
+                                .amount
+                                .multiply_ratio(pair_mine_balance, pair_ust_balance),
                         ),
                     ],
-                    slippage_tolerance: Some(Decimal::from_ratio(1u128, 10u128)), // 10%
+                    slippage_tolerance: Some(Decimal::from_ratio(1u128, 100u128)), // 1%
                     auto_stake: Some(true),
                     receiver: Some(env.contract.address.to_string()),
                 })?,
-                funds: vec![convert_amount],
+                funds: vec![convert_ust],
             });
 
             Ok(Response::new()
-                .add_messages(vec![approve_msg, convert_msg])
+                .add_messages(vec![approve_msg, provide_msg])
                 .add_attributes(vec![
                     ("action", "strategy_provide_liquidity"),
                     (
@@ -208,6 +223,9 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
         }
         ExecuteMsg::StrategyBuyback { amount } => {
             let config = CONFIG.load(deps.storage)?;
+            if info.sender != env.contract.address && info.sender != config.controller {
+                return Err(StdError::generic_err("unauthorized"));
+            }
 
             // 25% -> MINE buyback
 
@@ -236,7 +254,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
         }
         ExecuteMsg::Withdraw { target } => {
             let config = CONFIG.load(deps.storage)?;
-            if config.controller != info.sender || config.pylon_governance != info.sender {
+            if info.sender != config.controller && info.sender != config.pylon_governance {
                 return Err(StdError::generic_err("unauthorized"));
             }
 
