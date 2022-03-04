@@ -10,6 +10,10 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
+    UpdateConfig {
+        gov: String,
+        treasury: String,
+    },
     /// ## Description
     /// Sends all UST in contract to treasury
     ///
