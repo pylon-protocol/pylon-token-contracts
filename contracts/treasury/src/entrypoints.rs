@@ -1,5 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
+use std::str::FromStr;
 
 use cosmwasm_std::{
     coins, to_binary, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo,
@@ -204,7 +205,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                                 .multiply_ratio(pair_mine_balance, pair_ust_balance),
                         ),
                     ],
-                    slippage_tolerance: Some(Decimal::from_ratio(1u128, 100u128)), // 1%
+                    slippage_tolerance: Some(Decimal::from_str(pair::MAX_ALLOWED_SLIPPAGE)?),
                     auto_stake: Some(true),
                     receiver: Some(env.contract.address.to_string()),
                 })?,
@@ -236,7 +237,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                 msg: to_binary(&pair::ExecuteMsg::Swap {
                     offer_asset: asset::native_asset(denom.to_string(), convert_amount.amount),
                     belief_price: None,
-                    max_spread: Some(Decimal::from_ratio(1u128, 100u128)), // 1%
+                    max_spread: Some(Decimal::from_str(pair::MAX_ALLOWED_SLIPPAGE)?),
                     to: Some(config.pylon_governance.to_string()),
                 })?,
                 funds: vec![convert_amount],
