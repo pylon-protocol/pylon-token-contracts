@@ -42,7 +42,7 @@ pub fn stake_voting_tokens(
         deps.api.addr_humanize(&config.pylon_token)?,
         env.contract.address,
     )?
-    .checked_sub(state.total_deposit + amount)?;
+    .checked_sub(state.total_deposit + state.total_unbondings + amount)?;
 
     let share = if total_balance.is_zero() || state.total_share.is_zero() {
         amount
