@@ -11,6 +11,7 @@ pub fn query_state(deps: Deps) -> QueryResult {
         poll_count: state.poll_count,
         total_share: state.total_share,
         total_deposit: state.total_deposit,
+        total_unbondings: state.total_unbondings,
         total_airdrop_count: state.total_airdrop_count,
         airdrop_update_candidates: state.airdrop_update_candidates,
     })?)
