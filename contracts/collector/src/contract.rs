@@ -2,19 +2,13 @@
 use cosmwasm_std::entry_point;
 
 use cosmwasm_std::{
-    attr, to_binary, Binary, CanonicalAddr, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env,
-    MessageInfo, Reply, Response, StdError, StdResult, SubMsg, WasmMsg,
+    to_binary, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdError,
+    StdResult,
 };
-use cosmwasm_storage::singleton_read;
-use cw20::Cw20ExecuteMsg;
 use pylon_token::collector::{ConfigResponse, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use terraswap::asset::{Asset, AssetInfo, PairInfo};
-use terraswap::pair::ExecuteMsg as TerraswapExecuteMsg;
-use terraswap::querier::{query_balance, query_pair_info, query_token_balance};
+use pylon_utils::tax::deduct_tax;
 
-use crate::state::{read_config, store_config, Config};
+use crate::state::{Config, CONFIG};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -23,15 +17,11 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    store_config(
+    CONFIG.save(
         deps.storage,
         &Config {
-            gov_contract: deps.api.addr_canonicalize(&msg.gov_contract)?,
-            terraswap_factory: deps.api.addr_canonicalize(&msg.terraswap_factory)?,
-            pylon_token: deps.api.addr_canonicalize(&msg.pylon_token)?,
-            distributor_contract: deps.api.addr_canonicalize(&msg.distributor_contract)?,
-            reward_factor: msg.reward_factor,
-            enable_sweep: true,
+            gov: deps.api.addr_validate(msg.gov.as_str())?,
+            treasury: deps.api.addr_validate(msg.treasury.as_str())?,
         },
     )?;
 
@@ -41,201 +31,66 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> StdResult<Response> {
     match msg {
-        ExecuteMsg::UpdateConfig { reward_factor } => update_config(deps, info, reward_factor),
-        ExecuteMsg::Sweep { denom } => sweep(deps, env, denom),
+        ExecuteMsg::UpdateConfig { gov, treasury } => {
+            let mut config = CONFIG.load(deps.storage)?;
+            if info.sender != config.gov {
+                return Err(StdError::generic_err("unauthorized"));
+            }
+
+            config.gov = deps.api.addr_validate(config.gov.as_str())?;
+            config.treasury = deps.api.addr_validate(config.treasury.as_str())?;
+            CONFIG.save(deps.storage, &config)?;
+
+            Ok(Response::new().add_attributes(vec![
+                ("action", "update_config"),
+                ("gov", gov.as_str()),
+                ("treasury", treasury.as_str()),
+            ]))
+        }
+        ExecuteMsg::Collect {} => {
+            let config = CONFIG.load(deps.storage)?;
+            if info.sender != config.treasury {
+                return Err(StdError::generic_err("unauthorized"));
+            }
+
+            let ust_balance = deps.querier.query_balance(env.contract.address, "uusd")?;
+            let ust_transfer = deduct_tax(deps.as_ref(), ust_balance)?;
+
+            Ok(Response::new()
+                .add_message(CosmosMsg::Bank(BankMsg::Send {
+                    to_address: config.treasury.to_string(),
+                    amount: vec![ust_transfer.clone()],
+                }))
+                .add_attributes(vec![
+                    ("action", "collect"),
+                    ("amount", &ust_transfer.amount.to_string()),
+                ]))
+        }
     }
-}
-
-pub fn update_config(
-    deps: DepsMut,
-    info: MessageInfo,
-    reward_factor: Option<Decimal>,
-) -> StdResult<Response> {
-    let mut config: Config = read_config(deps.storage)?;
-    if deps.api.addr_canonicalize(info.sender.as_str())? != config.gov_contract {
-        return Err(StdError::generic_err("unauthorized"));
-    }
-
-    if let Some(reward_factor) = reward_factor {
-        config.reward_factor = reward_factor;
-    }
-
-    store_config(deps.storage, &config)?;
-    Ok(Response::default())
-}
-
-const SWEEP_REPLY_ID: u64 = 1;
-
-/// Sweep
-/// Anyone can execute sweep function to swap
-/// asset token => ANC token and distribute
-/// result ANC token to gov contract
-pub fn sweep(deps: DepsMut, env: Env, denom: String) -> StdResult<Response> {
-    let config: Config = read_config(deps.storage)?;
-    if !config.enable_sweep {
-        return Err(StdError::generic_err("unauthorized"));
-    }
-
-    let pylon_token = deps.api.addr_humanize(&config.pylon_token)?;
-    let terraswap_factory_addr = deps.api.addr_humanize(&config.terraswap_factory)?;
-
-    let pair_info: PairInfo = query_pair_info(
-        &deps.querier,
-        terraswap_factory_addr,
-        &[
-            AssetInfo::NativeToken {
-                denom: denom.to_string(),
-            },
-            AssetInfo::Token {
-                contract_addr: pylon_token.to_string(),
-            },
-        ],
-    )?;
-
-    let amount = query_balance(&deps.querier, env.contract.address, denom.to_string())?;
-
-    let swap_asset = Asset {
-        info: AssetInfo::NativeToken {
-            denom: denom.to_string(),
-        },
-        amount,
-    };
-
-    // deduct tax first
-    let amount = (swap_asset.deduct_tax(&deps.querier)?).amount;
-    Ok(Response::new()
-        .add_submessage(SubMsg::reply_on_success(
-            CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: pair_info.contract_addr,
-                msg: to_binary(&TerraswapExecuteMsg::Swap {
-                    offer_asset: Asset {
-                        amount,
-                        ..swap_asset
-                    },
-                    max_spread: None,
-                    belief_price: None,
-                    to: None,
-                })?,
-                funds: vec![Coin {
-                    denom: denom.to_string(),
-                    amount,
-                }],
-            }),
-            SWEEP_REPLY_ID,
-        ))
-        .add_attributes(vec![
-            attr("action", "sweep"),
-            attr(
-                "collected_rewards",
-                format!("{:?}{:?}", amount.to_string(), denom),
-            ),
-        ]))
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> StdResult<Response> {
-    if msg.id == SWEEP_REPLY_ID {
-        // send tokens on successful callback
-        return distribute(deps, env);
-    }
-
-    Err(StdError::generic_err("not supported reply"))
-}
-
-// Only contract itself can execute distribute function
-pub fn distribute(deps: DepsMut, env: Env) -> StdResult<Response> {
-    let config: Config = read_config(deps.storage)?;
-    let amount = query_token_balance(
-        &deps.querier,
-        deps.api.addr_humanize(&config.pylon_token)?,
-        env.contract.address,
-    )?;
-
-    let distribute_amount = amount * config.reward_factor;
-    let left_amount = amount.checked_sub(distribute_amount)?;
-
-    let mut messages: Vec<CosmosMsg> = vec![];
-
-    if !distribute_amount.is_zero() {
-        messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: deps.api.addr_humanize(&config.pylon_token)?.to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
-                recipient: deps.api.addr_humanize(&config.gov_contract)?.to_string(),
-                amount: distribute_amount,
-            })?,
-            funds: vec![],
-        }));
-    }
-
-    if !left_amount.is_zero() {
-        messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: deps.api.addr_humanize(&config.pylon_token)?.to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
-                recipient: deps
-                    .api
-                    .addr_humanize(&config.distributor_contract)?
-                    .to_string(),
-                amount: left_amount,
-            })?,
-            funds: vec![],
-        }));
-    }
-
-    Ok(Response::new().add_messages(messages).add_attributes(vec![
-        ("action", "distribute"),
-        ("distribute_amount", &distribute_amount.to_string()),
-        ("distributor_payback_amount", &left_amount.to_string()),
-    ]))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Config {} => {
+            let config = CONFIG.load(deps.storage)?;
+
+            to_binary(&ConfigResponse {
+                gov: config.gov.to_string(),
+                treasury: config.treasury.to_string(),
+            })
+        }
     }
 }
 
-pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
-    let state = read_config(deps.storage)?;
-    let resp = ConfigResponse {
-        gov_contract: deps.api.addr_humanize(&state.gov_contract)?.to_string(),
-        terraswap_factory: deps
-            .api
-            .addr_humanize(&state.terraswap_factory)?
-            .to_string(),
-        pylon_token: deps.api.addr_humanize(&state.pylon_token)?.to_string(),
-        distributor_contract: deps
-            .api
-            .addr_humanize(&state.distributor_contract)?
-            .to_string(),
-        reward_factor: state.reward_factor,
-    };
-
-    Ok(resp)
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct LegacyConfig {
-    pub gov_contract: CanonicalAddr,         // collected rewards receiver
-    pub terraswap_factory: CanonicalAddr,    // terraswap factory contract
-    pub pylon_token: CanonicalAddr,          // anchor token address
-    pub distributor_contract: CanonicalAddr, // distributor contract to sent back rewards
-    pub reward_factor: Decimal, // reward distribution rate to gov contract, left rewards sent back to distributor contract
-}
-
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
-    let legacy_config: LegacyConfig = singleton_read(deps.storage, b"config").load()?;
-
-    store_config(
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> StdResult<Response> {
+    // just override it
+    CONFIG.save(
         deps.storage,
         &Config {
-            gov_contract: legacy_config.gov_contract,
-            terraswap_factory: legacy_config.terraswap_factory,
-            pylon_token: legacy_config.pylon_token,
-            distributor_contract: legacy_config.distributor_contract,
-            reward_factor: legacy_config.reward_factor,
-            enable_sweep: false,
+            gov: deps.api.addr_validate(msg.gov.as_str())?,
+            treasury: deps.api.addr_validate(msg.treasury.as_str())?,
         },
     )?;
 

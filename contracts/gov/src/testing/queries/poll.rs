@@ -2,8 +2,7 @@ use crate::queries::poll::{
     query_polls, query_polls_with_category_filter, query_polls_with_status_filter,
 };
 use cosmwasm_std::{from_binary, Api};
-use pylon_token::gov_resp;
-use pylon_token::gov_resp::PollsResponse;
+use pylon_token::gov;
 
 use crate::states::poll::{Poll, PollCategory, PollStatus};
 use crate::states::state::State;
@@ -73,7 +72,7 @@ fn polls_default() {
     let (status_list, category_list) = setup_state(&mut deps);
 
     let response = query_polls(deps.as_ref(), None, None, None).unwrap();
-    let response = from_binary::<gov_resp::PollsResponse>(&response).unwrap();
+    let response = from_binary::<gov::PollsResponse>(&response).unwrap();
     for status in status_list.iter() {
         for category in category_list.iter() {
             assert!(response.polls.iter().any(|x| {
@@ -90,7 +89,7 @@ fn polls_with_status_filter_default() {
     let (_, category_list) = setup_state(&mut deps);
 
     let response = query_polls_with_status_filter(deps.as_ref(), None, None, None, None).unwrap();
-    let response = from_binary::<PollsResponse>(&response).unwrap();
+    let response = from_binary::<gov::PollsResponse>(&response).unwrap();
     for category in category_list.iter() {
         assert!(response
             .polls
@@ -112,7 +111,7 @@ fn polls_with_category_filter_default() {
     let (status_list, _) = setup_state(&mut deps);
 
     let response = query_polls_with_category_filter(deps.as_ref(), None, None, None, None).unwrap();
-    let response = from_binary::<PollsResponse>(&response).unwrap();
+    let response = from_binary::<gov::PollsResponse>(&response).unwrap();
     for status in status_list.iter() {
         assert!(response
             .polls

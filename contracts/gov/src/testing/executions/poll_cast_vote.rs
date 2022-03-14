@@ -1,9 +1,3 @@
-use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{attr, from_binary, Env, MessageInfo, Response, Uint128};
-use pylon_token::common::OrderBy;
-use pylon_token::gov_msg::{VoteOption as GovVoteOption, VoterInfo as GovVoterInfo};
-use pylon_token::gov_resp::{PollResponse, StakerResponse, VotersResponse, VotersResponseItem};
-
 use crate::error::ContractError;
 use crate::executions::poll::cast_vote;
 use crate::executions::ExecuteResult;
@@ -13,6 +7,13 @@ use crate::states::poll::VoteOption;
 use crate::testing::{
     instantiate, mock_deps, mock_env_height, MockDeps, TEST_VOTER, TEST_VOTER_2, TEST_VOTER_3,
     VOTING_TOKEN,
+};
+use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
+use cosmwasm_std::{attr, from_binary, Env, MessageInfo, Response, Uint128};
+use pylon_token::common::OrderBy;
+use pylon_token::gov::{
+    PollResponse, StakerResponse, VoteOption as GovVoteOption, VoterInfo as GovVoterInfo,
+    VotersResponse, VotersResponseItem,
 };
 
 pub fn exec(

@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::{Api, Decimal, Env, MessageInfo, Response, StdError, Uint128};
-use pylon_token::gov_msg::InstantiateMsg;
+use pylon_token::gov::InstantiateMsg;
 
 use crate::error::ContractError;
 use crate::executions::{instantiate, ExecuteResult};

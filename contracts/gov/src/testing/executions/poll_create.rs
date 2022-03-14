@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::{attr, to_binary, Deps, Env, MessageInfo, Response, StdError, Uint128};
 use cw20::Cw20ExecuteMsg;
-use pylon_token::gov_msg::PollExecuteMsg;
+use pylon_token::gov::PollExecuteMsg;
 
 use crate::error::ContractError;
 use crate::executions::poll::create;

@@ -1,7 +1,9 @@
 use cosmwasm_std::{to_binary, Deps, Env, Uint128};
 use pylon_token::common::OrderBy;
-use pylon_token::gov_msg::{ClaimableAirdrop, VoterInfo as GovVoterInfo};
-use pylon_token::gov_resp::{ClaimResponse, ClaimsResponse, StakerResponse, StakersResponse};
+use pylon_token::gov::{
+    ClaimResponse, ClaimableAirdrop, ClaimsResponse, StakerResponse, StakersResponse,
+    VoterInfo as GovVoterInfo,
+};
 use terraswap::querier::query_token_balance;
 
 use crate::executions::airdrop::{calculate_reward_per_token, calculate_rewards};

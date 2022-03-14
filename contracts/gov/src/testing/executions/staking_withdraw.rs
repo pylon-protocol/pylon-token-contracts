@@ -1,8 +1,8 @@
 use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{from_binary, to_binary, CosmosMsg, Env, MessageInfo, SubMsg, Uint128, WasmMsg};
 use cw20::Cw20ExecuteMsg;
-use pylon_token::gov_msg::{VoteOption as GovVoteOption, VoterInfo as GovVoterInfo};
-use pylon_token::gov_resp::StakerResponse;
+use pylon_token::gov::StakerResponse;
+use pylon_token::gov::{VoteOption as GovVoteOption, VoterInfo as GovVoterInfo};
 
 use crate::error::ContractError;
 use crate::executions::staking::withdraw_voting_tokens;

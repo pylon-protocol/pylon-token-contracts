@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{attr, from_binary, Uint128};
-use pylon_token::gov_resp::StakerResponse;
+use pylon_token::gov::StakerResponse;
 
 use crate::queries::bank::query_staker;
 use crate::testing::{instantiate, mock_deps, TEST_VOTER, VOTING_TOKEN};

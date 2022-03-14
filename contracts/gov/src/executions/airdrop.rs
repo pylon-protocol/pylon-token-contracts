@@ -2,7 +2,7 @@ use cosmwasm_std::{
     to_binary, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
-use pylon_token::gov_msg::{AirdropMsg, ExecuteMsg};
+use pylon_token::gov::{AirdropMsg, ExecuteMsg};
 use std::cmp::max;
 
 use crate::constant::MAX_QUERY_LIMIT;

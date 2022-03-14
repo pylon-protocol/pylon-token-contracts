@@ -5,7 +5,7 @@ use cosmwasm_std::{
     to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Reply, Response, WasmMsg,
 };
 use cw2::set_contract_version;
-use pylon_token::gov_msg::{
+use pylon_token::gov::{
     AirdropMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, PollMsg, QueryMsg, StakingMsg,
 };
 
@@ -156,7 +156,6 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
     match msg {
-        QueryMsg::ApiVersion {} => queries::query_api_version(deps),
         QueryMsg::Config {} => queries::config::query_config(deps),
         QueryMsg::State {} => queries::state::query_state(deps),
         QueryMsg::Claim { address, claim_id } => {

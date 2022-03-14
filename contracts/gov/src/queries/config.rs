@@ -1,5 +1,5 @@
 use cosmwasm_std::{to_binary, Deps};
-use pylon_token::gov_resp::ConfigResponse;
+use pylon_token::gov::ConfigResponse;
 
 use crate::queries::QueryResult;
 use crate::states::config::Config;

@@ -4,7 +4,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw20::Cw20ReceiveMsg;
-use pylon_token::gov_msg::{AirdropMsg, Cw20HookMsg, ExecuteMsg, InstantiateMsg, StakingMsg};
+use pylon_token::gov::{AirdropMsg, Cw20HookMsg, ExecuteMsg, InstantiateMsg, StakingMsg};
 
 use crate::constant::{CONTRACT_NAME, CONTRACT_VERSION};
 use crate::error::ContractError;
