@@ -444,6 +444,7 @@ pub struct ConfigResponse {
 ///     "poll_count": 10,
 ///     "total_share": "10000000000",
 ///     "total_deposit": "143500600000",
+///     "total_unbondings": "143500600000",
 ///     "total_airdrop_count": 5,
 ///     "airdrop_update_candidates": [0, 1, 2, 3],
 /// }
