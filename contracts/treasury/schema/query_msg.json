@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "oneOf": [
+    {
+      "title": "Description",
+      "description": "Returns [`ConfigResponse`] which contains current state of contract's configuration\n\n## Example ```typescript { \"config\": {} } ```",
+      "type": "object",
+      "required": [
+        "config"
+      ],
+      "properties": {
+        "config": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Description",
+      "description": "Returns [`StateResponse`] which contains current state of contract's mutable values\n\n## Example ```typescript { \"state\": {} } ```",
+      "type": "object",
+      "required": [
+        "state"
+      ],
+      "properties": {
+        "state": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}
