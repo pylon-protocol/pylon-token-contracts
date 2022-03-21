@@ -71,7 +71,7 @@ pub fn query_staker(deps: Deps, env: Env, address: String) -> QueryResult {
         deps.api.addr_humanize(&config.pylon_token)?,
         env.contract.address.clone(),
     )?
-    .checked_sub(state.total_deposit)?;
+    .checked_sub(state.total_deposit + state.total_unbondings)?;
 
     Ok(to_binary(&to_response(
         &deps,
@@ -104,7 +104,7 @@ pub fn query_stakers(
         deps.api.addr_humanize(&config.pylon_token)?,
         env.contract.address.clone(),
     )?
-    .checked_sub(state.total_deposit)?;
+    .checked_sub(state.total_deposit + state.total_unbondings)?;
 
     let stakers: Vec<(String, StakerResponse)> = managers
         .iter()

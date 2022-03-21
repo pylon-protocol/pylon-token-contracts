@@ -126,7 +126,7 @@ pub fn cast_vote(
         deps.api.addr_humanize(&config.pylon_token)?,
         env.contract.address,
     )?
-    .checked_sub(state.total_deposit)?;
+    .checked_sub(state.total_deposit + state.total_unbondings)?;
 
     if token_manager
         .share
@@ -246,7 +246,7 @@ pub fn snapshot(deps: DepsMut, env: Env, _info: MessageInfo, poll_id: u64) -> Ex
         deps.api.addr_humanize(&config.pylon_token)?,
         env.contract.address,
     )?
-    .checked_sub(state.total_deposit)?;
+    .checked_sub(state.total_deposit + state.total_unbondings)?;
 
     let mut poll = Poll::load(deps.storage, &poll_id)?;
     if poll.status != PollStatus::InProgress {
@@ -329,7 +329,7 @@ pub fn end(deps: DepsMut, env: Env, poll_id: u64) -> ExecuteResult {
             deps.api.addr_humanize(&config.pylon_token)?,
             env.contract.address,
         )?
-        .checked_sub(state.total_deposit)?;
+        .checked_sub(state.total_deposit + state.total_unbondings)?;
 
         (
             Decimal::from_ratio(tallied_weight, staked_weight),
